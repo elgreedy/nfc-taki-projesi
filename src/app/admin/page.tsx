@@ -30,8 +30,12 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Bilgisayarının Yerel IP Adresi ve Portu
-  const LOCAL_IP_ORIGIN = 'http://192.168.68.69:3000';
+  const getOrigin = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return 'http://localhost:3000';
+  };
 
   // Takıları Çek
   const fetchJewelries = async () => {
@@ -85,8 +89,7 @@ export default function AdminDashboard() {
   // QR Kod İndirme Fonksiyonu
   const downloadQRCode = async (nfcTagId: string) => {
     try {
-      // localhost yerine IP adresini kullanıyoruz
-      const targetUrl = `${LOCAL_IP_ORIGIN}/taki/${nfcTagId}`;
+      const targetUrl = `${getOrigin()}/taki/${nfcTagId}`;
       
       // QR Kodu yüksek çözünürlüklü Data URL olarak oluşturuyoruz
       const qrDataUrl = await QRCode.toDataURL(targetUrl, {
@@ -111,15 +114,14 @@ export default function AdminDashboard() {
 
   // NFC için modal açma
   const handleOpenNfcModal = (nfcTagId: string) => {
-    // localhost yerine IP adresini kopyalatıyoruz
-    const fullUrl = `${LOCAL_IP_ORIGIN}/taki/${nfcTagId}`;
+    const fullUrl = `${getOrigin()}/taki/${nfcTagId}`;
     setActiveUrlModal(fullUrl);
     setCopied(false);
   };
 
   // NFC İçin Tam Linki Kopyalama
   const copyNfcUrl = async (nfcTagId: string) => {
-    const fullUrl = `${LOCAL_IP_ORIGIN}/taki/${nfcTagId}`;
+    const fullUrl = `${getOrigin()}/taki/${nfcTagId}`;
 
     try {
       await navigator.clipboard.writeText(fullUrl);
