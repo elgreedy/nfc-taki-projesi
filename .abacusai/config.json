@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rg --files --glob 'src/**/*.tsx' c:/Users/kapla/nfc-taki-projesi --sort modified)",
+      "Bash(cmd /c \"cd /d c:\\Users\\kapla\\nfc-taki-projesi && dir /S /B src\")",
+      "Bash(dir /S /B \"c:/Users/kapla/nfc-taki-projesi/src\")",
+      "Bash(powershell -NoProfile -Command \"Set-Location 'c:\\Users\\kapla\\nfc-taki-projesi'; $p = Start-Process -FilePath 'cmd.exe' -…)",
+      "Bash(curl -s -H \"apikey: sb_publishable_5TiQeAQHvgvTyq1aptnZYQ_gfmncg5q\" \"https://zshndmjpxkoqpijiksvp.supabase.co/rest/v1/je…)",
+      "Bash(curl -v -H \"apikey: sb_publishable_5TiQeAQHvgvTyq1aptnZYQ_gfmncg5q\" \"https://zshndmjpxkoqpijiksvp.supabase.co/rest/v1/je…)",
+      "Bash(curl -s http://localhost:3000/taki/test 2>&1 | findstr \"notFound\\|404\\|error\" | head -5)",
+      "Bash(curl -s http://localhost:3000/taki/test 2>&1 | findstr \"notFound\")",
+      "Bash(curl -s http://localhost:3000/taki/test 2>&1 | findstr \"404\")",
+      "Bash(curl -s http://localhost:3000/taki/test 2>&1 | findstr \"not-found\")"
+    ]
+  }
+}

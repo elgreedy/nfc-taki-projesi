@@ -29,12 +29,10 @@ export default function AdminDashboard() {
   
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const getOrigin = () => {
-    if (typeof window !== 'undefined') {
-      return window.location.origin;
-    }
-    return 'http://localhost:3000';
+    return process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
   };
 
   // Takıları Çek
@@ -53,6 +51,29 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchJewelries();
+
+    const channel = supabase
+      .channel('jewelries-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jewelries' },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            setJewelries((prev) =>
+              prev.map((j) => (j.id === (payload.new as Jewelry).id ? (payload.new as Jewelry) : j))
+            );
+          } else if (payload.eventType === 'INSERT') {
+            setJewelries((prev) => [payload.new as Jewelry, ...prev]);
+          } else if (payload.eventType === 'DELETE') {
+            setJewelries((prev) => prev.filter((j) => j.id !== (payload.old as Jewelry).id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Supabase Storage'a Görsel Yükleme
@@ -174,49 +195,68 @@ export default function AdminDashboard() {
     }
   };
 
+  // Fotoğrafı Sil
+  const handleDeleteMedia = async (id: string, media_url: string) => {
+    if (!confirm('Bu fotoğrafı/videoyu silmek istediğinize emin misiniz?')) return;
+
+    const res = await fetch('/api/delete-media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, media_url }),
+    });
+
+    if (!res.ok) {
+      const { error } = await res.json();
+      alert('Hata: ' + error);
+    }
+  };
+
   // Takı Sil
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bu takıyı silmek istediğinize emin misiniz?')) return;
+  const handleDelete = async (id: string, media_url: string) => {
+    if (!confirm('Bu NFC takıyı tamamen silmek istediğinize emin misiniz?')) return;
 
-    const { error } = await supabase.from('jewelries').delete().eq('id', id);
+    const res = await fetch('/api/delete-jewelry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, media_url }),
+    });
 
-    if (error) {
-      alert('Silinirken hata oluştu: ' + error.message);
-    } else {
-      fetchJewelries();
+    if (!res.ok) {
+      const { error } = await res.json();
+      alert('Hata: ' + error);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6 md:p-12">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-12">
       <div className="max-w-5xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-gray-800">NFC Takı Yönetim Paneli</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">NFC Takı Yönetim Paneli</h1>
 
         {/* Yeni Takı Formu */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">Yeni Takı / Etiket Ekle</h2>
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Yeni Takı / Etiket Ekle</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">NFC Tag ID (Kod/Slug) *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">NFC Tag ID (Kod/Slug) *</label>
                 <input
                   type="text"
                   placeholder="Örn: taki-003"
                   value={nfcTagId}
                   onChange={(e) => setNfcTagId(e.target.value)}
-                  className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 bg-white font-medium placeholder:text-gray-400"
+                  className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 font-medium placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Başlık *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Başlık *</label>
                 <input
                   type="text"
                   placeholder="Örn: Tatil Anımız"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 bg-white font-medium placeholder:text-gray-400"
+                  className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 font-medium placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   required
                 />
               </div>
@@ -224,24 +264,24 @@ export default function AdminDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Kime / Alıcı Adı</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Kime / Alıcı Adı</label>
                 <input
                   type="text"
                   placeholder="Örn: Mehmet'e"
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
-                  className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 bg-white font-medium placeholder:text-gray-400"
+                  className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 font-medium placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Anı Fotoğrafı Yükle</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anı Fotoğrafı Yükle</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleFileUpload}
                   disabled={uploading}
-                  className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer"
+                  className="mt-1 w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer"
                 />
                 {uploading && <p className="text-xs text-rose-500 mt-1">Yükleniyor...</p>}
                 {mediaUrl && <p className="text-xs text-green-600 mt-1 font-medium">✓ Fotoğraf Yüklendi</p>}
@@ -249,13 +289,13 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Özel Mesaj</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Özel Mesaj</label>
               <textarea
                 rows={3}
                 placeholder="NFC okutulduğunda çıkacak yazı..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="mt-1 w-full p-2 border rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 bg-white font-medium placeholder:text-gray-400"
+                className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 font-medium placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -270,18 +310,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Mevcut Takılar Listesi */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">Kayıtlı Takılar</h2>
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Kayıtlı Takılar</h2>
 
           {loading ? (
-            <p className="text-gray-500">Yükleniyor...</p>
+            <p className="text-gray-500 dark:text-gray-400">Yükleniyor...</p>
           ) : jewelries.length === 0 ? (
-            <p className="text-gray-500">Henüz hiç takı eklenmemiş.</p>
+            <p className="text-gray-500 dark:text-gray-400">Henüz hiç takı eklenmemiş.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                     <th className="p-3">Görsel</th>
                     <th className="p-3">NFC ID</th>
                     <th className="p-3">Başlık</th>
@@ -290,19 +330,19 @@ export default function AdminDashboard() {
                     <th className="p-3 text-right">İşlem</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {jewelries.map((j) => (
-                    <tr key={j.id} className="hover:bg-gray-50">
+                    <tr key={j.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="p-3">
                         {j.media_url ? (
                           <img src={j.media_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400">Yok</div>
+                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">Yok</div>
                         )}
                       </td>
-                      <td className="p-3 font-mono text-sm font-bold text-gray-700">{j.nfc_tag_id}</td>
-                      <td className="p-3 font-medium text-gray-800">{j.title}</td>
-                      <td className="p-3 text-gray-600">{j.recipient_name || '-'}</td>
+                      <td className="p-3 font-mono text-sm font-bold text-gray-700 dark:text-gray-300">{j.nfc_tag_id}</td>
+                      <td className="p-3 font-medium text-gray-800 dark:text-gray-200">{j.title}</td>
+                      <td className="p-3 text-gray-600 dark:text-gray-400">{j.recipient_name || '-'}</td>
                       <td className="p-3">
                         <a
                           href={`/taki/${j.nfc_tag_id}`}
@@ -316,26 +356,52 @@ export default function AdminDashboard() {
                       <td className="p-3 text-center space-x-2">
                         <button
                           onClick={() => handleOpenNfcModal(j.nfc_tag_id)}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-2.5 py-1.5 rounded-md font-medium border border-gray-300 transition"
+                          className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1.5 rounded-md font-medium border border-gray-300 dark:border-gray-600 transition"
                           title="NFC Çipine Yazılacak URL'yi Gösterir"
                         >
                           🔗 NFC URL
                         </button>
                         <button
                           onClick={() => downloadQRCode(j.nfc_tag_id)}
-                          className="bg-slate-800 hover:bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-md font-medium transition"
+                          className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500 text-white text-xs px-2.5 py-1.5 rounded-md font-medium transition"
                           title="Yüksek Kaliteli QR Kod İndir"
                         >
                           📥 QR İndir
                         </button>
                       </td>
                       <td className="p-3 text-right">
-                        <button
-                          onClick={() => handleDelete(j.id)}
-                          className="text-red-500 hover:text-red-700 text-sm font-semibold"
-                        >
-                          Sil
-                        </button>
+                        <div className="relative inline-block">
+                          <button
+                            onClick={() => setActiveDropdown(activeDropdown === j.id ? null : j.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold text-lg transition"
+                          >
+                            ···
+                          </button>
+                          {activeDropdown === j.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setActiveDropdown(null)}
+                              />
+                              <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-20 overflow-hidden">
+                                {j.media_url && (
+                                  <button
+                                    onClick={() => { setActiveDropdown(null); handleDeleteMedia(j.id, j.media_url); }}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition"
+                                  >
+                                    🗑 Medyayı Sil
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => { setActiveDropdown(null); handleDelete(j.id, j.media_url); }}
+                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition"
+                                >
+                                  🗑 Projeyi Sil
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -349,17 +415,17 @@ export default function AdminDashboard() {
       {/* NFC URL Kopyalama Açılır Penceresi (Modal) */}
       {activeUrlModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-center gap-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">🔗 NFC URL Kopyala</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">🔗 NFC URL Kopyala</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Bu URL'yi NFC çipine yazmak için NFC Tools uygulamasına yapıştırabilirsiniz.
                 </p>
               </div>
               <button
                 onClick={() => setActiveUrlModal(null)}
-                className="text-gray-400 hover:text-gray-700 font-bold text-xl"
+                className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-bold text-xl"
               >
                 ✕
               </button>
@@ -371,7 +437,7 @@ export default function AdminDashboard() {
                 readOnly
                 value={activeUrlModal}
                 onClick={(e) => (e.target as HTMLInputElement).select()}
-                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-3 font-mono text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500"
               />
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -383,15 +449,15 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   onClick={() => setActiveUrlModal(null)}
-                  className="inline-flex justify-center items-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                  className="inline-flex justify-center items-center rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Kapat
                 </button>
               </div>
 
-              <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800 border border-amber-200">
+              <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/50 p-4 text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                 <p className="font-semibold">NFC Tools için adımlar:</p>
-                <ol className="mt-2 list-decimal list-inside space-y-1 text-xs text-gray-700">
+                <ol className="mt-2 list-decimal list-inside space-y-1 text-xs text-gray-700 dark:text-gray-300">
                   <li>URL'yi kopyala.</li>
                   <li>Uygulamada <span className="font-semibold">Write ➔ Add record ➔ URL</span> seçeneğini aç.</li>
                   <li>Yapıştır ve NFC çipe yaz.</li>
