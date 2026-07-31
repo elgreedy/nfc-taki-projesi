@@ -563,6 +563,20 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
+
+                  <div className="space-y-2 pt-3">
+                    <div className="text-[10px] uppercase tracking-[0.24em] font-semibold" style={{ color: 'var(--text2)' }}>
+                      Kendi mesajını yaz
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Buraya kendi özel mesajını yazabilirsiniz..."
+                      className={inp + ' resize-none'}
+                      style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
