@@ -442,83 +442,57 @@ export default function AdminDashboard() {
 
         {/* Başlık ve İstatistikler */}
         <div className="space-y-4">
-          <div className="glass-card p-5 sm:p-6 rounded-[28px] border" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(233,30,99,0.08), rgba(255,255,255,0.03))' }}>
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--accent-rose)', borderColor: 'var(--border)' }}>
-                  <span>✨</span> Anı Yönetim Merkezi
-                </div>
-                <div>
-                  <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-serif shimmer-text">
-                    NFC Takı Yönetimi
-                  </h1>
-                  <p className="text-sm mt-2 max-w-2xl font-sans leading-relaxed" style={{ color: 'var(--text2)' }}>
-                    Yeni takılar ekleyin, kayıtlı anıları yönetin ve NFC etiketlerine tek tıkla bağlantı aktarın.
-                  </p>
-                </div>
+          <div className="rounded-2xl border p-5 sm:p-6" style={{ background: 'var(--surface-solid)', borderColor: 'var(--border)' }}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text3)' }}>Yönetim paneli</p>
+                <h1 className="text-2xl sm:text-3xl font-semibold mt-1" style={{ color: 'var(--text)' }}>
+                  NFC Takı Yönetimi
+                </h1>
+                <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--text2)' }}>
+                  Takıları ekleyin, medya ekleyin ve bağlantıları yönetin.
+                </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={scrollToCreateForm}
-                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 hover-lift"
-                  style={{ background: 'var(--accent-gradient)', color: '#fff' }}
+                  className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}
                 >
                   + Yeni Takı Ekle
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode((prev) => (prev === 'grid' ? 'list' : 'grid'))}
-                  className="px-4 py-2 rounded-xl text-sm font-bold glass"
-                  style={{ color: 'var(--text)' }}
+                  className="rounded-xl border px-4 py-2 text-sm font-medium"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text)' }}
                 >
-                  {viewMode === 'grid' ? '☰ Liste Görünümü' : '▦ Kart Görünümü'}
+                  {viewMode === 'grid' ? '☰ Liste' : '▦ Kart'}
                 </button>
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3 mt-6">
-              <div className="glass-card p-5 hover-lift">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Toplam Takı</p>
-                  <span className="text-xl">💍</span>
-                </div>
-                <p className="text-3xl font-extrabold mt-2 font-serif gold-text">{totalTakis}</p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--text3)' }}>Toplam Takı</p>
+                <p className="text-2xl font-semibold mt-2" style={{ color: 'var(--text)' }}>{totalTakis}</p>
               </div>
-              <div className="glass-card p-5 hover-lift">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Medya Ekli</p>
-                  <span className="text-xl">📸</span>
-                </div>
-                <p className="text-3xl font-extrabold mt-2 font-serif gradient-text">{totalWithMedia}</p>
+              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--text3)' }}>Medya Ekli</p>
+                <p className="text-2xl font-semibold mt-2" style={{ color: 'var(--text)' }}>{totalWithMedia}</p>
               </div>
-              <div className="glass-card p-5 hover-lift">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Medya Eksik</p>
-                  <span className="text-xl">📭</span>
-                </div>
-                <p className="text-3xl font-extrabold mt-2 font-serif" style={{ color: 'var(--text2)' }}>{totalWithoutMedia}</p>
+              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--text3)' }}>Medya Eksik</p>
+                <p className="text-2xl font-semibold mt-2" style={{ color: 'var(--text)' }}>{totalWithoutMedia}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="glass-card p-5 sm:p-6 space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--text3)' }}>Hızlı İşlem</p>
-            <h3 className="text-lg font-bold font-serif" style={{ color: 'var(--text)' }}>Anı ekleme akışını hızlandırın</h3>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>Özel mesaj, kapak medyası ve NFC bağlantısını tek panel üzerinden yönetin.</p>
-          </div>
-          <div className="glass-card p-5 sm:p-6 space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--text3)' }}>Kurulum</p>
-            <h3 className="text-lg font-bold font-serif" style={{ color: 'var(--text)' }}>Yeni kayıtları anında yayımlayın</h3>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>QR kod, portal bağlantısı ve medya galerisini tek tıkla paylaşmaya hazır hale getirin.</p>
-          </div>
-        </div>
-
         {/* Yeni Takı Formu */}
-        <div id="new-jewelry-form" className="glass-card p-6 sm:p-8 space-y-6">
+        <div id="new-jewelry-form" className="rounded-2xl border p-6 sm:p-8 space-y-6" style={{ background: 'var(--surface-solid)', borderColor: 'var(--border)' }}>
           <h2 className="text-lg font-bold font-serif flex items-center gap-2.5" style={{ color: 'var(--text)' }}>
             <span className="w-7 h-7 rounded-xl flex items-center justify-center text-sm font-bold glass"
               style={{ color: 'var(--accent)' }}>+</span>
@@ -664,15 +638,15 @@ export default function AdminDashboard() {
             </div>
 
             <button type="submit" disabled={saving || uploading}
-              className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all duration-300 active:scale-95 hover-lift disabled:opacity-50 text-white"
-              style={{ background: 'var(--accent-gradient)', boxShadow: '0 8px 25px -6px rgba(233, 30, 99, 0.4)' }}>
+              className="w-full py-3 rounded-2xl text-sm font-medium transition-all duration-200 disabled:opacity-50"
+              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border)' }}>
               {saving ? 'Kaydediliyor...' : '✨ Yeni NFC Takısını Kaydet'}
             </button>
           </form>
         </div>
 
-        {/* Kayıtlı Takılar Bölümü (Yenilenmiş Lüks Tasarım) */}
-        <div className="glass-card p-6 sm:p-8 space-y-6">
+        {/* Kayıtlı Takılar Bölümü */}
+        <div className="rounded-2xl border p-6 sm:p-8 space-y-6" style={{ background: 'var(--surface-solid)', borderColor: 'var(--border)' }}>
 
           {/* Başlık & Arama / Filtreleme Üst Barı */}
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between border-b pb-6" style={{ borderColor: 'var(--border)' }}>
@@ -777,7 +751,7 @@ export default function AdminDashboard() {
 
             if (filteredJewelries.length === 0) {
               return (
-                <div className="py-16 text-center space-y-3 glass-card p-8">
+                <div className="py-16 text-center space-y-3 rounded-2xl border p-8" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
                   <div className="text-5xl">🔍</div>
                   <h3 className="text-base font-bold font-serif" style={{ color: 'var(--text)' }}>
                     Kayıt Bulunamadı
@@ -803,8 +777,8 @@ export default function AdminDashboard() {
                   {filteredJewelries.map((j) => (
                     <div
                       key={j.id}
-                      className="glass-card overflow-hidden hover-lift flex flex-col justify-between group transition-all duration-300 relative"
-                      style={{ border: '1px solid var(--border)' }}>
+                      className="rounded-2xl border overflow-hidden flex flex-col justify-between group transition-all duration-300 relative"
+                      style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)' }}>
 
                       {/* Image / Video Media Preview Header */}
                       <div className="relative aspect-video overflow-hidden bg-black/40">
@@ -898,7 +872,7 @@ export default function AdminDashboard() {
 
             {/* LIST VIEW (Gelişmiş Tablo/Liste Görünümü) */}
             return (
-              <div className="divide-y overflow-hidden rounded-2xl glass" style={{ borderColor: 'var(--border)' }}>
+              <div className="divide-y overflow-hidden rounded-2xl border" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)' }}>
                 {filteredJewelries.map((j) => (
                   <div
                     key={j.id}
