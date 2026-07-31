@@ -228,6 +228,10 @@ export default function AdminDashboard() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const totalTakis = jewelries.length;
+  const totalWithMedia = jewelries.filter((j) => !!j.media_url).length;
+  const totalWithoutMedia = totalTakis - totalWithMedia;
+
   const getOrigin = () => process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
 
   const checkNfcSupport = () => {
@@ -420,7 +424,7 @@ export default function AdminDashboard() {
 
   return (
     <main className="min-h-screen p-4 sm:p-8" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Bildirim toast */}
         {notification && (
@@ -436,23 +440,60 @@ export default function AdminDashboard() {
         )}
 
         {/* Başlık */}
-        <div className="flex items-center justify-between pt-2">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text)' }}>
-              NFC Takı Paneli
-            </h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>
-              {jewelries.length} takı kayıtlı · Gerçek zamanlı
-            </p>
+        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text)' }}>
+                  NFC Takı Yönetimi
+                </h1>
+                <p className="text-sm mt-1 max-w-2xl" style={{ color: 'var(--text2)' }}>
+                  Yeni takılar ekleyin, mevcut kayıtları yönetin ve anı portalına hızlıca göz atın.
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-3xl flex items-center justify-center text-xl"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                💎
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text2)' }}>Toplam Takı</p>
+                <p className="text-3xl font-bold mt-3" style={{ color: 'var(--text)' }}>{totalTakis}</p>
+              </div>
+              <div className="rounded-3xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text2)' }}>Medya Ekli</p>
+                <p className="text-3xl font-bold mt-3" style={{ color: 'var(--text)' }}>{totalWithMedia}</p>
+              </div>
+              <div className="rounded-3xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text2)' }}>Medya Eksik</p>
+                <p className="text-3xl font-bold mt-3" style={{ color: 'var(--text)' }}>{totalWithoutMedia}</p>
+              </div>
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            💎
+
+          <div className="rounded-3xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text)' }}>Öne Çıkan Hızlı İşlemler</h2>
+            <div className="grid gap-3">
+              <button type="button" onClick={() => setMessageBoxOpen(true)}
+                className="w-full text-left rounded-3xl px-4 py-4 transition-all duration-200"
+                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}>
+                <p className="text-sm font-semibold">Hazır mesaj seçimi</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text2)' }}>Kategoriler arasında hızlıca geçiş yap.</p>
+              </button>
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="w-full text-left rounded-3xl px-4 py-4 transition-all duration-200"
+                style={{ background: 'var(--accent)', color: '#fff' }}>
+                <p className="text-sm font-semibold">Medya yükle</p>
+                <p className="text-xs mt-1 opacity-80">Fotoğraf veya video ekleyerek anıyı zenginleştir.</p>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Yeni Takı Formu */}
-        <div className="rounded-2xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <div className="rounded-3xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           <h2 className="text-base font-bold mb-5 flex items-center gap-2" style={{ color: 'var(--text)' }}>
             <span className="w-6 h-6 rounded-lg flex items-center justify-center text-xs"
               style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}>+</span>
@@ -589,28 +630,33 @@ export default function AdminDashboard() {
         </div>
 
         {/* Liste */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-            <h2 className="text-base font-bold" style={{ color: 'var(--text)' }}>Kayıtlı Takılar</h2>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: 'var(--surface2)', color: 'var(--text2)' }}>
+        <div className="rounded-3xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="px-6 py-4 border-b flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--border)' }}>
+            <div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--text)' }}>Kayıtlı Takılar</h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>Sistemdeki bütün takıları görüntüleyebilir, hızlıca yönetebilirsiniz.</p>
+            </div>
+            <span className="text-xs font-bold px-3 py-2 rounded-3xl" style={{ background: 'var(--surface2)', color: 'var(--text2)' }}>
               {jewelries.length} adet
             </span>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center">
-              <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin mx-auto"
+            <div className="p-16 text-center">
+              <div className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin mx-auto"
                 style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+              <p className="mt-4 text-sm" style={{ color: 'var(--text2)' }}>Veriler yükleniyor...</p>
             </div>
           ) : jewelries.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-4xl mb-3">📭</div>
+            <div className="p-16 text-center">
+              <div className="text-5xl mb-3">📭</div>
               <p className="text-sm font-medium" style={{ color: 'var(--text2)' }}>Henüz hiç takı eklenmemiş.</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--text2)' }}>Yeni takı eklemek için formu kullanabilirsiniz.</p>
             </div>
           ) : (
             <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
               {jewelries.map((j) => (
-                <div key={j.id} className="flex items-center gap-4 px-6 py-4 transition-colors duration-150"
+                <div key={j.id} className="grid gap-4 md:grid-cols-[1fr_auto] items-center px-6 py-4 transition-colors duration-150"
                   style={{ background: 'transparent' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface2)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
