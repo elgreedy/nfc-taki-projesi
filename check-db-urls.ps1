@@ -1,0 +1,4 @@
+$env:NEXT_PUBLIC_SUPABASE_URL = "https://zshndmjpxkoqpijiksvp.supabase.co"
+$env:SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzaG5kbWpweGtvcXBpamlrc3ZwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTI2NTU0OSwiZXhwIjoyMTAwODQxNTQ5fQ.JIYtK_j4PJxRkw1G9tlPtt-uvNw8YKBTtPBL9PQyOSI"
+
+node check-r2-files.js

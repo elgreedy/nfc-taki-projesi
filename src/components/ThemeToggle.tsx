@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('theme');
@@ -11,6 +12,7 @@ export default function ThemeToggle() {
     const isDark = saved ? saved === 'dark' : prefersDark;
     setDark(isDark);
     document.documentElement.classList.toggle('dark', isDark);
+    setMounted(true);
   }, []);
 
   const toggle = () => {
@@ -20,13 +22,23 @@ export default function ThemeToggle() {
     localStorage.setItem('theme', next ? 'dark' : 'light');
   };
 
+  if (!mounted) return null;
+
   return (
     <button
       onClick={toggle}
       title={dark ? 'Açık temaya geç' : 'Koyu temaya geç'}
-      className="fixed top-4 right-4 z-50 w-10 h-10 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md flex items-center justify-center text-lg hover:scale-110 transition-transform"
+      className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-300 shadow-lg hover:scale-105 active:scale-95 glass"
+      style={{
+        background: dark ? 'color-mix(in srgb, var(--surface) 80%, transparent)' : 'color-mix(in srgb, #fff 80%, transparent)',
+        border: '1px solid var(--border)',
+        color: 'var(--text2)',
+      }}
     >
-      {dark ? '☀️' : '🌙'}
+      <span className="text-sm transition-transform duration-500" style={{ transform: dark ? 'rotate(360deg)' : 'rotate(0deg)' }}>
+        {dark ? '☀️' : '🌙'}
+      </span>
+      <span>{dark ? 'Açık' : 'Koyu'}</span>
     </button>
   );
 }

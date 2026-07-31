@@ -21,7 +21,7 @@ interface MediaItem {
   order_index: number;
 }
 
-const inp = "w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all duration-200";
+const inp = "w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none transition-all duration-200 font-sans";
 const inpStyle = { background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' };
 
 const PRESET_TITLES = [
@@ -199,6 +199,9 @@ const PRESET_MESSAGES = [
 export default function AdminDashboard() {
   const [jewelries, setJewelries] = useState<Jewelry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'with-media' | 'no-media'>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [nfcTagId, setNfcTagId] = useState('');
   const [title, setTitle] = useState('');
   const [recipientName, setRecipientName] = useState('');
@@ -403,18 +406,12 @@ export default function AdminDashboard() {
     if (!activeMediaModal) return;
     if (!confirm('Bu medyayı silmek istiyor musunuz?')) return;
     try {
-      const deleteRes = await fetch('/api/delete-from-r2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: item.url }),
-      });
-      if (!deleteRes.ok) throw new Error('R2 silme başarısız');
       const res = await fetch('/api/delete-media-item', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: item.id, url: item.url, jewelry_id: activeMediaModal.id }),
       });
-      if (!res.ok) throw new Error('Veritabanı silme başarısız');
+      if (!res.ok) throw new Error('Silme başarısız');
       setModalMedia((prev) => prev.filter((m) => m.id !== item.id));
       notify('Medya silindi.');
     } catch (err: any) {
@@ -439,85 +436,72 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Başlık */}
-        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text)' }}>
-                  NFC Takı Yönetimi
-                </h1>
-                <p className="text-sm mt-1 max-w-2xl" style={{ color: 'var(--text2)' }}>
-                  Yeni takılar ekleyin, mevcut kayıtları yönetin ve anı portalına hızlıca göz atın.
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-3xl flex items-center justify-center text-xl"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                💎
-              </div>
+        {/* Başlık ve İstatistikler */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-serif shimmer-text">
+                NFC Takı Yönetimi
+              </h1>
+              <p className="text-sm mt-1 max-w-2xl font-sans" style={{ color: 'var(--text2)' }}>
+                Yeni takılar ekleyin, kayıtlı anıları yönetin ve NFC etiketlerine tek tıkla URL aktarın.
+              </p>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text2)' }}>Toplam Takı</p>
-                <p className="text-3xl font-bold mt-3" style={{ color: 'var(--text)' }}>{totalTakis}</p>
-              </div>
-              <div className="rounded-3xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text2)' }}>Medya Ekli</p>
-                <p className="text-3xl font-bold mt-3" style={{ color: 'var(--text)' }}>{totalWithMedia}</p>
-              </div>
-              <div className="rounded-3xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--text2)' }}>Medya Eksik</p>
-                <p className="text-3xl font-bold mt-3" style={{ color: 'var(--text)' }}>{totalWithoutMedia}</p>
-              </div>
+            <div className="w-14 h-14 rounded-3xl flex items-center justify-center text-2xl glass-card animate-float">
+              💎
             </div>
           </div>
 
-          <div className="rounded-3xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text)' }}>Öne Çıkan Hızlı İşlemler</h2>
-            <div className="grid gap-3">
-              <button type="button" onClick={() => setMessageBoxOpen(true)}
-                className="w-full text-left rounded-3xl px-4 py-4 transition-all duration-200"
-                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}>
-                <p className="text-sm font-semibold">Hazır mesaj seçimi</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text2)' }}>Kategoriler arasında hızlıca geçiş yap.</p>
-              </button>
-              <button type="button" onClick={() => fileInputRef.current?.click()}
-                className="w-full text-left rounded-3xl px-4 py-4 transition-all duration-200"
-                style={{ background: 'var(--accent)', color: '#fff' }}>
-                <p className="text-sm font-semibold">Medya yükle</p>
-                <p className="text-xs mt-1 opacity-80">Fotoğraf veya video ekleyerek anıyı zenginleştir.</p>
-              </button>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="glass-card p-5 hover-lift">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Toplam Takı</p>
+                <span className="text-xl">💍</span>
+              </div>
+              <p className="text-3xl font-extrabold mt-2 font-serif gold-text">{totalTakis}</p>
+            </div>
+            <div className="glass-card p-5 hover-lift">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Medya Ekli</p>
+                <span className="text-xl">📸</span>
+              </div>
+              <p className="text-3xl font-extrabold mt-2 font-serif gradient-text">{totalWithMedia}</p>
+            </div>
+            <div className="glass-card p-5 hover-lift">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Bekleyen</p>
+                <span className="text-xl">📭</span>
+              </div>
+              <p className="text-3xl font-extrabold mt-2 font-serif" style={{ color: 'var(--text2)' }}>{totalWithoutMedia}</p>
             </div>
           </div>
         </div>
 
         {/* Yeni Takı Formu */}
-        <div className="rounded-3xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <h2 className="text-base font-bold mb-5 flex items-center gap-2" style={{ color: 'var(--text)' }}>
-            <span className="w-6 h-6 rounded-lg flex items-center justify-center text-xs"
-              style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}>+</span>
-            Yeni Takı Ekle
+        <div className="glass-card p-6 sm:p-8 space-y-6">
+          <h2 className="text-lg font-bold font-serif flex items-center gap-2.5" style={{ color: 'var(--text)' }}>
+            <span className="w-7 h-7 rounded-xl flex items-center justify-center text-sm font-bold glass"
+              style={{ color: 'var(--accent)' }}>+</span>
+            Yeni Takı & Anı Kaydı Oluştur
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text2)' }}>NFC Tag ID *</label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>NFC Tag ID *</label>
                 <input type="text" placeholder="örn: taki-003" value={nfcTagId} onChange={(e) => setNfcTagId(e.target.value)}
                   className={inp} style={inpStyle} required />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text2)' }}>Başlık *</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Takı Başlığı *</label>
                 <input type="text" placeholder="örn: Tatil Anımız" value={title} onChange={(e) => setTitle(e.target.value)}
                   className={inp} style={inpStyle} required />
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {PRESET_TITLES.map((p) => (
                     <button key={p.value} type="button"
                       onClick={() => setTitle(p.value)}
-                      className="text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95"
+                      className="text-[11px] font-semibold px-3 py-1 rounded-full transition-all duration-150 active:scale-95 glass"
                       style={{
-                        background: title === p.value ? 'color-mix(in srgb, var(--accent) 18%, transparent)' : 'var(--surface2)',
-                        border: `1px solid ${title === p.value ? 'var(--accent)' : 'var(--border)'}`,
+                        borderColor: title === p.value ? 'var(--accent)' : 'var(--border)',
                         color: title === p.value ? 'var(--accent)' : 'var(--text2)',
                       }}>
                       {p.emoji} {p.label}
@@ -525,52 +509,70 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text2)' }}>Alıcı Adı</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Alıcı Adı</label>
                 <input type="text" placeholder="örn: Sevgilime" value={recipientName} onChange={(e) => setRecipientName(e.target.value)}
                   className={inp} style={inpStyle} />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text2)' }}>Fotoğraf / Video</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Kapak Fotoğrafı / Video</label>
                 <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading}
-                  className="w-full text-xs cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:cursor-pointer"
+                  className="w-full text-xs cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:cursor-pointer glass"
                   style={{ color: 'var(--text2)' }} />
-                {uploading && <p className="text-xs" style={{ color: 'var(--accent)' }}>Yükleniyor...</p>}
-                {mediaUrl && <p className="text-xs text-green-600 font-medium">✓ Dosya yüklendi</p>}
+                {uploading && <p className="text-xs font-medium gold-text animate-pulse">Yükleniyor...</p>}
+                {mediaUrl && (
+                  <div className="flex items-center gap-3 mt-2 p-2.5 rounded-2xl glass border-emerald-500/30">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 relative">
+                      {/\.(mp4|webm|ogg|mov)(\?|$)/i.test(mediaUrl) ? (
+                        <video src={mediaUrl} className="w-full h-full object-cover" muted />
+                      ) : (
+                        <img src={mediaUrl} alt="Preview" className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-emerald-500 font-bold">✓ Medya Yüklendi</p>
+                      <p className="text-[10px] truncate font-mono" style={{ color: 'var(--text2)' }}>{mediaUrl.split('/').pop()}</p>
+                    </div>
+                    <button type="button" onClick={() => { setMediaUrl(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                      className="text-xs px-2.5 py-1 rounded-xl transition-colors flex-shrink-0 glass text-rose-500">
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text2)' }}>Özel Mesaj</label>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Özel Anı Mesajı</label>
               <div
-                className="w-full rounded-2xl px-4 py-3 cursor-pointer transition-all duration-200"
+                className="w-full rounded-2xl px-4 py-3 cursor-pointer transition-all duration-200 glass"
                 style={{
-                  background: 'var(--surface2)',
-                  border: `1px solid ${messageBoxOpen ? 'var(--accent)' : 'var(--border)'}`,
+                  borderColor: messageBoxOpen ? 'var(--accent)' : 'var(--border)',
                   color: 'var(--text2)',
                 }}
                 onClick={() => setMessageBoxOpen((open) => !open)}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-left">
-                    {message ? message : 'Bir kategori seçin ve içinden bir mesaj seçin...'}
+                  <span className="text-sm text-left italic font-serif">
+                    {message ? `"${message}"` : 'Hazır şablon mesajları keşfedin veya özel mesaj yazın...'}
                   </span>
                   <span className="text-xs font-bold" style={{ color: 'var(--text2)' }}>
-                    {messageBoxOpen ? '˅' : '›'}
+                    {messageBoxOpen ? '▲' : '▼'}
                   </span>
                 </div>
               </div>
 
               {messageBoxOpen && (
-                <div className="space-y-3 pt-3">
+                <div className="space-y-4 pt-3 animate-fade-in">
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.24em] mb-2 block" style={{ color: 'var(--text2)' }}>
+                    <label className="text-[10px] font-bold uppercase tracking-[0.24em] mb-2 block" style={{ color: 'var(--text3)' }}>
                       Mesaj Kategorisi
                     </label>
                     <select
                       value={activeMessageCategory}
                       onChange={(e) => setActiveMessageCategory(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none"
-                      style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                      className="w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none glass"
+                      style={{ color: 'var(--text)' }}
                     >
                       {PRESET_MESSAGES.map((cat) => (
                         <option key={cat.category} value={cat.category}>{cat.category}</option>
@@ -578,22 +580,21 @@ export default function AdminDashboard() {
                     </select>
                   </div>
 
-                  <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+                  <div className="rounded-2xl overflow-hidden glass p-3 space-y-2">
                     {PRESET_MESSAGES.filter((cat) => cat.category === activeMessageCategory).map((cat) => (
-                      <div key={cat.category} className="space-y-2 p-3" style={{ background: 'var(--surface2)' }}>
-                        <div className="text-[10px] uppercase tracking-[0.16em] font-bold" style={{ color: 'var(--text2)' }}>
+                      <div key={cat.category} className="space-y-2">
+                        <div className="text-[10px] uppercase tracking-[0.16em] font-bold gold-text">
                           {cat.category}
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid gap-2 max-h-56 overflow-y-auto pr-1">
                           {cat.items.map((msg) => (
                             <button
                               key={msg}
                               type="button"
                               onClick={() => { setMessage(msg); setMessageBoxOpen(false); }}
-                              className="text-left text-xs px-3 py-2 rounded-2xl transition-all duration-150 active:scale-[0.98]"
+                              className="text-left text-xs px-3.5 py-2.5 rounded-xl transition-all duration-150 active:scale-[0.98] glass font-serif italic"
                               style={{
-                                background: message === msg ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--surface)',
-                                border: `1px solid ${message === msg ? 'var(--accent)' : 'var(--border)'}`,
+                                borderColor: message === msg ? 'var(--accent)' : 'var(--border)',
                                 color: message === msg ? 'var(--accent)' : 'var(--text2)',
                               }}
                             >
@@ -605,15 +606,15 @@ export default function AdminDashboard() {
                     ))}
                   </div>
 
-                  <div className="space-y-2 pt-3">
-                    <div className="text-[10px] uppercase tracking-[0.24em] font-semibold" style={{ color: 'var(--text2)' }}>
-                      Kendi mesajını yaz
+                  <div className="space-y-2 pt-2">
+                    <div className="text-[10px] uppercase tracking-[0.24em] font-bold" style={{ color: 'var(--text3)' }}>
+                      Kendi Özelleştirilmiş Mesajını Yaz
                     </div>
                     <textarea
-                      rows={4}
+                      rows={3}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Buraya kendi özel mesajını yazabilirsiniz..."
+                      placeholder="Buraya kendi özel duygu ve dileklerinizi yazabilirsiniz..."
                       className={inp + ' resize-none'}
                       style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
                     />
@@ -621,137 +622,307 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+
             <button type="submit" disabled={saving || uploading}
-              className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-50 active:scale-98"
-              style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent2))', color: '#fff' }}>
-              {saving ? 'Kaydediliyor...' : '+ NFC Takıyı Kaydet'}
+              className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all duration-300 active:scale-95 hover-lift disabled:opacity-50 text-white"
+              style={{ background: 'var(--accent-gradient)', boxShadow: '0 8px 25px -6px rgba(233, 30, 99, 0.4)' }}>
+              {saving ? 'Kaydediliyor...' : '✨ Yeni NFC Takısını Kaydet'}
             </button>
           </form>
         </div>
 
-        {/* Liste */}
-        <div className="rounded-3xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <div className="px-6 py-4 border-b flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: 'var(--border)' }}>
+        {/* Kayıtlı Takılar Bölümü (Yenilenmiş Lüks Tasarım) */}
+        <div className="glass-card p-6 sm:p-8 space-y-6">
+
+          {/* Başlık & Arama / Filtreleme Üst Barı */}
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between border-b pb-6" style={{ borderColor: 'var(--border)' }}>
             <div>
-              <h2 className="text-base font-bold" style={{ color: 'var(--text)' }}>Kayıtlı Takılar</h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>Sistemdeki bütün takıları görüntüleyebilir, hızlıca yönetebilirsiniz.</p>
+              <h2 className="text-xl font-bold font-serif flex items-center gap-2.5" style={{ color: 'var(--text)' }}>
+                <span>💎</span> Kayıtlı Takı Portföyü
+              </h2>
+              <p className="text-xs mt-1 font-sans" style={{ color: 'var(--text2)' }}>
+                Sistemde kayıtlı NFC takılarını arayın, medya galerilerini düzenleyin veya QR kod oluşturun.
+              </p>
             </div>
-            <span className="text-xs font-bold px-3 py-2 rounded-3xl" style={{ background: 'var(--surface2)', color: 'var(--text2)' }}>
-              {jewelries.length} adet
-            </span>
+
+            {/* Arama Kutusu ve Filtreler */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              {/* Search Bar */}
+              <div className="relative flex-1 sm:w-64">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm opacity-60">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Takı başlığı, alıcı veya Tag ID ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-xs font-medium glass outline-none transition-all focus:border-rose-400"
+                  style={{ color: 'var(--text)' }}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-60 hover:opacity-100">
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter Chips */}
+              <div className="flex items-center gap-1.5 glass p-1 rounded-xl">
+                {[
+                  { id: 'all', label: 'Tümü' },
+                  { id: 'with-media', label: '📸 Medyalı' },
+                  { id: 'no-media', label: '📭 Bekleyen' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFilterStatus(tab.id as any)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200"
+                    style={{
+                      background: filterStatus === tab.id ? 'var(--accent-gradient)' : 'transparent',
+                      color: filterStatus === tab.id ? '#ffffff' : 'var(--text2)',
+                    }}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Mode Toggle Buttons */}
+              <div className="flex items-center gap-1 glass p-1 rounded-xl">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  title="Kart Görünümü"
+                  className="p-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{
+                    background: viewMode === 'grid' ? 'var(--surface-solid)' : 'transparent',
+                    color: viewMode === 'grid' ? 'var(--accent)' : 'var(--text2)',
+                    border: viewMode === 'grid' ? '1px solid var(--border)' : 'none',
+                  }}>
+                  ▦ Grid
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  title="Liste Görünümü"
+                  className="p-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{
+                    background: viewMode === 'list' ? 'var(--surface-solid)' : 'transparent',
+                    color: viewMode === 'list' ? 'var(--accent)' : 'var(--text2)',
+                    border: viewMode === 'list' ? '1px solid var(--border)' : 'none',
+                  }}>
+                  ☰ Liste
+                </button>
+              </div>
+            </div>
           </div>
 
+          {/* İçerik Gösterimi */}
           {loading ? (
-            <div className="p-16 text-center">
-              <div className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin mx-auto"
+            <div className="py-20 text-center space-y-4">
+              <div className="w-14 h-14 rounded-full border-4 border-t-transparent animate-spin mx-auto"
                 style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
-              <p className="mt-4 text-sm" style={{ color: 'var(--text2)' }}>Veriler yükleniyor...</p>
+              <p className="text-sm font-serif gold-text animate-pulse">Takı Portföyü Yükleniyor...</p>
             </div>
-          ) : jewelries.length === 0 ? (
-            <div className="p-16 text-center">
-              <div className="text-5xl mb-3">📭</div>
-              <p className="text-sm font-medium" style={{ color: 'var(--text2)' }}>Henüz hiç takı eklenmemiş.</p>
-              <p className="text-xs mt-2" style={{ color: 'var(--text2)' }}>Yeni takı eklemek için formu kullanabilirsiniz.</p>
-            </div>
-          ) : (
-            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {jewelries.map((j) => (
-                <div key={j.id} className="grid gap-4 md:grid-cols-[1fr_auto] items-center px-6 py-4 transition-colors duration-150"
-                  style={{ background: 'transparent' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface2)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  {/* Küçük resim */}
-                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
-                    {j.media_url ? (
-                      <img src={j.media_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-lg">📷</div>
-                    )}
-                  </div>
+          ) : (() => {
+            const filteredJewelries = jewelries.filter((j) => {
+              const query = searchQuery.toLowerCase().trim();
+              const matchesSearch =
+                !query ||
+                j.title.toLowerCase().includes(query) ||
+                (j.recipient_name && j.recipient_name.toLowerCase().includes(query)) ||
+                j.nfc_tag_id.toLowerCase().includes(query);
 
-                  {/* Bilgiler */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>{j.title}</p>
-                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className="text-xs font-mono" style={{ color: 'var(--accent)' }}>{j.nfc_tag_id}</span>
-                      {j.recipient_name && (
-                        <span className="text-xs" style={{ color: 'var(--text2)' }}>→ {j.recipient_name}</span>
-                      )}
-                      {!j.media_url && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: '#fef3c7', color: '#d97706' }}>
-                          Medya Yok
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              if (!matchesSearch) return false;
+              if (filterStatus === 'with-media') return !!j.media_url;
+              if (filterStatus === 'no-media') return !j.media_url;
+              return true;
+            });
 
-                  {/* Aksiyonlar */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <a href={`/taki/${j.nfc_tag_id}`} target="_blank" rel="noreferrer"
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ background: 'var(--surface2)', color: 'var(--text2)', border: '1px solid var(--border)' }}
-                      title="Sayfayı aç">
-                      ↗
-                    </a>
-                    <button onClick={() => { setActiveUrlModal(`${getOrigin()}/taki/${j.nfc_tag_id}`); setCopied(false); setNfcStatus('idle'); checkNfcSupport(); }}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ background: 'var(--surface2)', color: 'var(--text2)', border: '1px solid var(--border)' }}
-                      title="NFC URL">
-                      🔗
+            if (filteredJewelries.length === 0) {
+              return (
+                <div className="py-16 text-center space-y-3 glass-card p-8">
+                  <div className="text-5xl">🔍</div>
+                  <h3 className="text-base font-bold font-serif" style={{ color: 'var(--text)' }}>
+                    Kayıt Bulunamadı
+                  </h3>
+                  <p className="text-xs font-sans max-w-sm mx-auto" style={{ color: 'var(--text2)' }}>
+                    {searchQuery ? `"${searchQuery}" aramanıza uygun takı kaydı bulunamadı.` : 'Henüz bu filtrede takı kaydı mevcut değil.'}
+                  </p>
+                  {(searchQuery || filterStatus !== 'all') && (
+                    <button
+                      onClick={() => { setSearchQuery(''); setFilterStatus('all'); }}
+                      className="px-4 py-2 rounded-xl text-xs font-bold glass text-rose-500 mt-2">
+                      Filtreleri Temizle
                     </button>
-                    <button onClick={() => downloadQRCode(j.nfc_tag_id)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ background: 'var(--surface2)', color: 'var(--text2)', border: '1px solid var(--border)' }}
-                      title="QR İndir">
-                      📥
-                    </button>
-                    <button onClick={() => { setActiveDropdown(null); openMediaModal(j); }}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ background: 'var(--surface2)', color: 'var(--text2)', border: '1px solid var(--border)' }}
-                      title="Galeri Yönet">
-                      🖼
-                    </button>
+                  )}
+                </div>
+              );
+            }
 
-                    {/* ··· menüsü */}
-                    <div className="relative">
-                      <button onClick={() => setActiveDropdown(activeDropdown === j.id ? null : j.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-base font-black transition-colors"
-                        style={{ background: activeDropdown === j.id ? 'var(--surface2)' : 'transparent', color: 'var(--text2)' }}>
-                        ···
-                      </button>
-                      {activeDropdown === j.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
-                          <div className="absolute right-0 mt-1 w-44 rounded-xl shadow-xl z-20 overflow-hidden"
-                            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                            {j.media_url && (
-                              <button onClick={() => { setActiveDropdown(null); handleDeleteMedia(j.id, j.media_url); }}
-                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors text-left"
-                                style={{ color: '#f97316' }}
-                                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface2)')}
-                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                                🗑 Medyayı Sil
-                              </button>
-                            )}
-                            <button onClick={() => { setActiveDropdown(null); handleDelete(j.id, j.media_url); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors text-left"
-                              style={{ color: '#ef4444' }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface2)')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                              🗑 Projeyi Sil
+            {/* GRID VIEW (Gelişmiş Lüks Kartlar) */}
+            if (viewMode === 'grid') {
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredJewelries.map((j) => (
+                    <div
+                      key={j.id}
+                      className="glass-card overflow-hidden hover-lift flex flex-col justify-between group transition-all duration-300 relative"
+                      style={{ border: '1px solid var(--border)' }}>
+
+                      {/* Image / Video Media Preview Header */}
+                      <div className="relative aspect-video overflow-hidden bg-black/40">
+                        {j.media_url ? (
+                          /\.(mp4|webm|ogg|mov)(\?|$)/i.test(j.media_url) ? (
+                            <video src={j.media_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" muted />
+                          ) : (
+                            <img src={j.media_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          )
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-amber-500/10 to-rose-500/10">
+                            <span className="text-4xl opacity-80">💎</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Kapak Medyası Bekliyor</span>
+                          </div>
+                        )}
+
+                        {/* Top Badges Overlay */}
+                        <div className="absolute top-3 left-3 flex items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-full glass text-[10px] font-extrabold font-mono text-white tracking-wider shadow-md">
+                            🏷️ {j.nfc_tag_id}
+                          </span>
+                        </div>
+
+                        <div className="absolute top-3 right-3">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold shadow-md ${j.media_url ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                            {j.media_url ? '✓ Medyalı' : '📭 Boş'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Card Content Body */}
+                      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-bold font-serif group-hover:text-rose-500 transition-colors" style={{ color: 'var(--text)' }}>
+                            {j.title}
+                          </h3>
+
+                          {j.recipient_name && (
+                            <p className="text-xs font-semibold gold-text flex items-center gap-1">
+                              <span>✦</span> {j.recipient_name} İçin Özel
+                            </p>
+                          )}
+
+                          {j.message && (
+                            <p className="text-xs italic font-serif leading-relaxed line-clamp-2 pt-1 border-t" style={{ color: 'var(--text2)', borderColor: 'var(--border)' }}>
+                              "{j.message}"
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Action Buttons Toolbar */}
+                        <div className="pt-3 border-t flex items-center justify-between gap-2" style={{ borderColor: 'var(--border)' }}>
+                          <div className="flex items-center gap-1.5 flex-1">
+                            <a
+                              href={`/taki/${j.nfc_tag_id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex-1 py-2 px-3 rounded-xl text-xs font-bold glass text-center hover:border-rose-400 transition-all flex items-center justify-center gap-1"
+                              style={{ color: 'var(--text)' }}>
+                              <span>↗</span> Portal
+                            </a>
+
+                            <button
+                              onClick={() => { setActiveUrlModal(`${getOrigin()}/taki/${j.nfc_tag_id}`); setCopied(false); setNfcStatus('idle'); checkNfcSupport(); }}
+                              className="py-2 px-3 rounded-xl text-xs font-bold glass hover:border-amber-400 transition-all"
+                              title="NFC & QR Kod">
+                              📡 NFC/QR
+                            </button>
+
+                            <button
+                              onClick={() => { setActiveDropdown(null); openMediaModal(j); }}
+                              className="py-2 px-3 rounded-xl text-xs font-bold glass hover:border-rose-400 transition-all"
+                              title="Medya Galerisi">
+                              🖼 Galeri
                             </button>
                           </div>
-                        </>
-                      )}
+
+                          <button
+                            onClick={() => handleDelete(j.id, j.media_url)}
+                            className="p-2 rounded-xl text-xs font-bold glass hover:bg-rose-500/20 text-rose-500 transition-all"
+                            title="Takıyı Sil">
+                            🗑
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+
+            {/* LIST VIEW (Gelişmiş Tablo/Liste Görünümü) */}
+            return (
+              <div className="divide-y overflow-hidden rounded-2xl glass" style={{ borderColor: 'var(--border)' }}>
+                {filteredJewelries.map((j) => (
+                  <div
+                    key={j.id}
+                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 hover:bg-rose-500/5 transition-colors">
+
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 relative border" style={{ borderColor: 'var(--border)' }}>
+                        {j.media_url ? (
+                          /\.(mp4|webm|ogg|mov)(\?|$)/i.test(j.media_url) ? (
+                            <video src={j.media_url} className="w-full h-full object-cover" muted />
+                          ) : (
+                            <img src={j.media_url} alt="" className="w-full h-full object-cover" />
+                          )
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xl bg-amber-500/10">💎</div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm font-bold font-serif truncate" style={{ color: 'var(--text)' }}>
+                            {j.title}
+                          </h4>
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full glass gold-text">
+                            {j.nfc_tag_id}
+                          </span>
+                        </div>
+                        {j.recipient_name && (
+                          <p className="text-xs font-semibold text-rose-400 mt-0.5">
+                            ✦ {j.recipient_name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <a href={`/taki/${j.nfc_tag_id}`} target="_blank" rel="noreferrer"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold glass text-center hover:border-rose-400">
+                        ↗ Portal
+                      </a>
+                      <button onClick={() => { setActiveUrlModal(`${getOrigin()}/taki/${j.nfc_tag_id}`); setCopied(false); setNfcStatus('idle'); checkNfcSupport(); }}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold glass hover:border-amber-400">
+                        📡 NFC
+                      </button>
+                      <button onClick={() => downloadQRCode(j.nfc_tag_id)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold glass hover:border-emerald-400">
+                        📥 QR
+                      </button>
+                      <button onClick={() => openMediaModal(j)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold glass hover:border-rose-400">
+                        🖼 Medya
+                      </button>
+                      <button onClick={() => handleDelete(j.id, j.media_url)}
+                        className="p-1.5 rounded-xl text-xs font-bold glass text-rose-500 hover:bg-rose-500/20">
+                        🗑
+                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
+
       </div>
 
       {/* Medya Galeri Modal */}

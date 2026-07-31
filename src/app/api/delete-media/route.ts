@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { deleteFromR2 } from '@/lib/r2';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,13 +12,12 @@ export async function POST(req: NextRequest) {
     const { id, media_url } = await req.json();
     if (!id) return NextResponse.json({ error: 'id zorunludur.' }, { status: 400 });
 
+    // Dosyayı R2'den sil
     if (media_url) {
-      const path = media_url.split('/jewelry-media/')[1];
-      if (path) {
-        await supabaseAdmin.storage.from('jewelry-media').remove([path]);
-      }
+      await deleteFromR2(media_url).catch(() => {});
     }
 
+    // jewelries.media_url alanını temizle
     const { error } = await supabaseAdmin
       .from('jewelries')
       .update({ media_url: '' })

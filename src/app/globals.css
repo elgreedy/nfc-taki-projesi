@@ -3,24 +3,195 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #fbf7f4;
+  --bg-subtle: #f5eee8;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-solid: #ffffff;
+  --surface2: #f4ece6;
+  --border: rgba(212, 175, 55, 0.22);
+  --border-strong: rgba(194, 24, 91, 0.25);
+  --text: #1c1512;
+  --text2: #6e5c52;
+  --text3: #9a887d;
+  --accent: #d4af37;
+  --accent-gold: #e5c158;
+  --accent-rose: #e91e63;
+  --accent-rose-dark: #c2185b;
+  --accent-gradient: linear-gradient(135deg, #d4af37 0%, #e91e63 50%, #c2185b 100%);
+  --gold-gradient: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #aa7c11 100%);
+  --rose-gradient: linear-gradient(135deg, #ff80ab 0%, #e91e63 50%, #880e4f 100%);
+  --card-shadow: 0 20px 40px -15px rgba(212, 175, 55, 0.12), 0 10px 20px -10px rgba(0,0,0,0.04);
+  --card-hover-shadow: 0 30px 60px -20px rgba(233, 30, 99, 0.2), 0 15px 30px -10px rgba(212, 175, 55, 0.18);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --bg: #0d0a08;
+  --bg-subtle: #140f0c;
+  --surface: rgba(24, 18, 14, 0.8);
+  --surface-solid: #18120e;
+  --surface2: #241c16;
+  --border: rgba(212, 175, 55, 0.2);
+  --border-strong: rgba(240, 98, 146, 0.3);
+  --text: #f7f0eb;
+  --text2: #b8a396;
+  --text3: #806e63;
+  --accent: #f06292;
+  --accent-gold: #f3ce70;
+  --accent-rose: #f48fb1;
+  --accent-rose-dark: #ec407a;
+  --accent-gradient: linear-gradient(135deg, #f3ce70 0%, #f06292 50%, #ec407a 100%);
+  --gold-gradient: linear-gradient(135deg, #ffe082 0%, #d4af37 50%, #996515 100%);
+  --rose-gradient: linear-gradient(135deg, #f8bbd0 0%, #f06292 50%, #ad1457 100%);
+  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 25px 0 rgba(212, 175, 55, 0.05);
+  --card-hover-shadow: 0 30px 60px -20px rgba(240, 98, 146, 0.25), 0 0 35px 2px rgba(243, 206, 112, 0.15);
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --font-sans: var(--font-sans-custom), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-serif-custom), Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans-custom), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
+
+/* Serif class utility */
+.font-serif {
+  font-family: var(--font-serif-custom), Georgia, serif;
+}
+
+.font-sans {
+  font-family: var(--font-sans-custom), system-ui, -apple-system, sans-serif;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(40px) scale(0.98); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.8; }
+  50%  { opacity: 0.4; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50%      { transform: translateY(-18px) rotate(4deg) scale(1.03); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.3; filter: blur(30px); }
+  50%      { opacity: 0.6; filter: blur(40px); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-up    { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in    { animation: fadeIn 0.4s ease both; }
+.animate-scale-in   { animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-float      { animation: float 5s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+.animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
+
+.shimmer-text {
+  background: linear-gradient(90deg, #d4af37 0%, #f48fb1 25%, #e91e63 50%, #f3ce70 75%, #d4af37 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+.gold-text {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hover-lift {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid var(--border);
+}
+
+.glass-card {
+  background: var(--surface);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  border-radius: 1.5rem;
+}
+
+/* Şık scrollbar */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text2) 25%, transparent);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* Arka plan renk küreleri */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+}
+
