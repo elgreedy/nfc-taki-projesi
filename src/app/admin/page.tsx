@@ -362,6 +362,10 @@ export default function AdminDashboard() {
     else notify('Takı silindi.');
   };
 
+  const scrollToCreateForm = () => {
+    document.getElementById('new-jewelry-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const openMediaModal = (j: Jewelry) => {
     setActiveMediaModal(j);
     setModalMedia([]);
@@ -438,47 +442,83 @@ export default function AdminDashboard() {
 
         {/* Başlık ve İstatistikler */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-serif shimmer-text">
-                NFC Takı Yönetimi
-              </h1>
-              <p className="text-sm mt-1 max-w-2xl font-sans" style={{ color: 'var(--text2)' }}>
-                Yeni takılar ekleyin, kayıtlı anıları yönetin ve NFC etiketlerine tek tıkla URL aktarın.
-              </p>
-            </div>
-            <div className="w-14 h-14 rounded-3xl flex items-center justify-center text-2xl glass-card animate-float">
-              💎
-            </div>
-          </div>
+          <div className="glass-card p-5 sm:p-6 rounded-[28px] border" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(233,30,99,0.08), rgba(255,255,255,0.03))' }}>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--accent-rose)', borderColor: 'var(--border)' }}>
+                  <span>✨</span> Anı Yönetim Merkezi
+                </div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-serif shimmer-text">
+                    NFC Takı Yönetimi
+                  </h1>
+                  <p className="text-sm mt-2 max-w-2xl font-sans leading-relaxed" style={{ color: 'var(--text2)' }}>
+                    Yeni takılar ekleyin, kayıtlı anıları yönetin ve NFC etiketlerine tek tıkla bağlantı aktarın.
+                  </p>
+                </div>
+              </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="glass-card p-5 hover-lift">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Toplam Takı</p>
-                <span className="text-xl">💍</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={scrollToCreateForm}
+                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 hover-lift"
+                  style={{ background: 'var(--accent-gradient)', color: '#fff' }}
+                >
+                  + Yeni Takı Ekle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode((prev) => (prev === 'grid' ? 'list' : 'grid'))}
+                  className="px-4 py-2 rounded-xl text-sm font-bold glass"
+                  style={{ color: 'var(--text)' }}
+                >
+                  {viewMode === 'grid' ? '☰ Liste Görünümü' : '▦ Kart Görünümü'}
+                </button>
               </div>
-              <p className="text-3xl font-extrabold mt-2 font-serif gold-text">{totalTakis}</p>
             </div>
-            <div className="glass-card p-5 hover-lift">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Medya Ekli</p>
-                <span className="text-xl">📸</span>
+
+            <div className="grid gap-4 sm:grid-cols-3 mt-6">
+              <div className="glass-card p-5 hover-lift">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Toplam Takı</p>
+                  <span className="text-xl">💍</span>
+                </div>
+                <p className="text-3xl font-extrabold mt-2 font-serif gold-text">{totalTakis}</p>
               </div>
-              <p className="text-3xl font-extrabold mt-2 font-serif gradient-text">{totalWithMedia}</p>
-            </div>
-            <div className="glass-card p-5 hover-lift">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Bekleyen</p>
-                <span className="text-xl">📭</span>
+              <div className="glass-card p-5 hover-lift">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Medya Ekli</p>
+                  <span className="text-xl">📸</span>
+                </div>
+                <p className="text-3xl font-extrabold mt-2 font-serif gradient-text">{totalWithMedia}</p>
               </div>
-              <p className="text-3xl font-extrabold mt-2 font-serif" style={{ color: 'var(--text2)' }}>{totalWithoutMedia}</p>
+              <div className="glass-card p-5 hover-lift">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] font-sans" style={{ color: 'var(--text3)' }}>Medya Eksik</p>
+                  <span className="text-xl">📭</span>
+                </div>
+                <p className="text-3xl font-extrabold mt-2 font-serif" style={{ color: 'var(--text2)' }}>{totalWithoutMedia}</p>
+              </div>
             </div>
           </div>
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="glass-card p-5 sm:p-6 space-y-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--text3)' }}>Hızlı İşlem</p>
+            <h3 className="text-lg font-bold font-serif" style={{ color: 'var(--text)' }}>Anı ekleme akışını hızlandırın</h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>Özel mesaj, kapak medyası ve NFC bağlantısını tek panel üzerinden yönetin.</p>
+          </div>
+          <div className="glass-card p-5 sm:p-6 space-y-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: 'var(--text3)' }}>Kurulum</p>
+            <h3 className="text-lg font-bold font-serif" style={{ color: 'var(--text)' }}>Yeni kayıtları anında yayımlayın</h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>QR kod, portal bağlantısı ve medya galerisini tek tıkla paylaşmaya hazır hale getirin.</p>
+          </div>
+        </div>
+
         {/* Yeni Takı Formu */}
-        <div className="glass-card p-6 sm:p-8 space-y-6">
+        <div id="new-jewelry-form" className="glass-card p-6 sm:p-8 space-y-6">
           <h2 className="text-lg font-bold font-serif flex items-center gap-2.5" style={{ color: 'var(--text)' }}>
             <span className="w-7 h-7 rounded-xl flex items-center justify-center text-sm font-bold glass"
               style={{ color: 'var(--accent)' }}>+</span>
