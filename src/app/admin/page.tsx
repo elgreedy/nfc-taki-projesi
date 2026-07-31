@@ -22,7 +22,12 @@ interface MediaItem {
 }
 
 const inp = "w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none transition-all duration-200 font-sans";
-const inpStyle = { background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' };
+const inpStyle = {
+  background: 'var(--surface-solid)',
+  border: '1px solid var(--border)',
+  color: 'var(--text)',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)',
+};
 
 const PRESET_TITLES = [
   { emoji: '💍', label: 'Evlilik Teklifi', value: 'Evlilik Teklifim ❤️' },
@@ -210,6 +215,8 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeUrlModal, setActiveUrlModal] = useState<string | null>(null);
+  const [activeUrlModalMode, setActiveUrlModalMode] = useState<'share' | 'edit'>('share');
+  const [activeUrlModalNfcTagId, setActiveUrlModalNfcTagId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [activeMessageCategory, setActiveMessageCategory] = useState<string>(PRESET_MESSAGES[0]?.category || '');
@@ -236,6 +243,16 @@ export default function AdminDashboard() {
   const totalWithoutMedia = totalTakis - totalWithMedia;
 
   const getOrigin = () => process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+
+  const openUrlModal = (jewelry: Jewelry, mode: 'share' | 'edit' = 'share') => {
+    const link = `${getOrigin()}/taki/${jewelry.nfc_tag_id}${mode === 'edit' ? '?edit=true' : ''}`;
+    setActiveUrlModal(link);
+    setActiveUrlModalMode(mode);
+    setActiveUrlModalNfcTagId(jewelry.nfc_tag_id);
+    setCopied(false);
+    setNfcStatus('idle');
+    checkNfcSupport();
+  };
 
   const checkNfcSupport = () => {
     setNfcSupported('NDEFReader' in window);
@@ -492,154 +509,184 @@ export default function AdminDashboard() {
         </div>
 
         {/* Yeni Takı Formu */}
-        <div id="new-jewelry-form" className="rounded-2xl border p-6 sm:p-8 space-y-6" style={{ background: 'var(--surface-solid)', borderColor: 'var(--border)' }}>
-          <h2 className="text-lg font-bold font-serif flex items-center gap-2.5" style={{ color: 'var(--text)' }}>
-            <span className="w-7 h-7 rounded-xl flex items-center justify-center text-sm font-bold glass"
-              style={{ color: 'var(--accent)' }}>+</span>
-            Yeni Takı & Anı Kaydı Oluştur
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>NFC Tag ID *</label>
-                <input type="text" placeholder="örn: taki-003" value={nfcTagId} onChange={(e) => setNfcTagId(e.target.value)}
-                  className={inp} style={inpStyle} required />
+        <div id="new-jewelry-form" className="rounded-[28px] border p-5 sm:p-7 space-y-6" style={{ background: 'linear-gradient(180deg, var(--surface-solid) 0%, var(--surface2) 100%)', borderColor: 'var(--border)' }}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text2)' }}>
+                <span className="text-sm">✦</span> Yeni kayıt
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Takı Başlığı *</label>
-                <input type="text" placeholder="örn: Tatil Anımız" value={title} onChange={(e) => setTitle(e.target.value)}
-                  className={inp} style={inpStyle} required />
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {PRESET_TITLES.map((p) => (
-                    <button key={p.value} type="button"
-                      onClick={() => setTitle(p.value)}
-                      className="text-[11px] font-semibold px-3 py-1 rounded-full transition-all duration-150 active:scale-95 glass"
-                      style={{
-                        borderColor: title === p.value ? 'var(--accent)' : 'var(--border)',
-                        color: title === p.value ? 'var(--accent)' : 'var(--text2)',
-                      }}>
-                      {p.emoji} {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Alıcı Adı</label>
-                <input type="text" placeholder="örn: Sevgilime" value={recipientName} onChange={(e) => setRecipientName(e.target.value)}
-                  className={inp} style={inpStyle} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Kapak Fotoğrafı / Video</label>
-                <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading}
-                  className="w-full text-xs cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:cursor-pointer glass"
-                  style={{ color: 'var(--text2)' }} />
-                {uploading && <p className="text-xs font-medium gold-text animate-pulse">Yükleniyor...</p>}
-                {mediaUrl && (
-                  <div className="flex items-center gap-3 mt-2 p-2.5 rounded-2xl glass border-emerald-500/30">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 relative">
-                      {/\.(mp4|webm|ogg|mov)(\?|$)/i.test(mediaUrl) ? (
-                        <video src={mediaUrl} className="w-full h-full object-cover" muted />
-                      ) : (
-                        <img src={mediaUrl} alt="Preview" className="w-full h-full object-cover" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-emerald-500 font-bold">✓ Medya Yüklendi</p>
-                      <p className="text-[10px] truncate font-mono" style={{ color: 'var(--text2)' }}>{mediaUrl.split('/').pop()}</p>
-                    </div>
-                    <button type="button" onClick={() => { setMediaUrl(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                      className="text-xs px-2.5 py-1 rounded-xl transition-colors flex-shrink-0 glass text-rose-500">
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </div>
+              <h2 className="mt-3 text-xl font-semibold" style={{ color: 'var(--text)' }}>
+                Yeni Takı & Anı Oluştur
+              </h2>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text2)' }}>
+                NFC kimliği, başlık, mesaj ve medya bilgilerini tek blokta doldurun.
+              </p>
             </div>
+            <div className="rounded-2xl border p-3 text-sm max-w-sm" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text2)' }}>
+              <div className="font-medium" style={{ color: 'var(--text)' }}>İpucu</div>
+              <div className="mt-1 text-xs leading-relaxed">Başlık ve mesaj şablonlarını kullanarak kaydı hızlıca tamamlayabilirsiniz.</div>
+            </div>
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider font-sans" style={{ color: 'var(--text2)' }}>Özel Anı Mesajı</label>
-              <div
-                className="w-full rounded-2xl px-4 py-3 cursor-pointer transition-all duration-200 glass"
-                style={{
-                  borderColor: messageBoxOpen ? 'var(--accent)' : 'var(--border)',
-                  color: 'var(--text2)',
-                }}
-                onClick={() => setMessageBoxOpen((open) => !open)}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-left italic font-serif">
-                    {message ? `"${message}"` : 'Hazır şablon mesajları keşfedin veya özel mesaj yazın...'}
-                  </span>
-                  <span className="text-xs font-bold" style={{ color: 'var(--text2)' }}>
-                    {messageBoxOpen ? '▲' : '▼'}
-                  </span>
-                </div>
-              </div>
-
-              {messageBoxOpen && (
-                <div className="space-y-4 pt-3 animate-fade-in">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-[0.24em] mb-2 block" style={{ color: 'var(--text3)' }}>
-                      Mesaj Kategorisi
-                    </label>
-                    <select
-                      value={activeMessageCategory}
-                      onChange={(e) => setActiveMessageCategory(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none glass"
-                      style={{ color: 'var(--text)' }}
-                    >
-                      {PRESET_MESSAGES.map((cat) => (
-                        <option key={cat.category} value={cat.category}>{cat.category}</option>
-                      ))}
-                    </select>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text2)' }}>NFC Tag ID *</label>
+                    <input type="text" placeholder="örn: taki-003" value={nfcTagId} onChange={(e) => setNfcTagId(e.target.value)}
+                      className={inp} style={inpStyle} required />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text2)' }}>Takı Başlığı *</label>
+                    <input type="text" placeholder="örn: Tatil Anımız" value={title} onChange={(e) => setTitle(e.target.value)}
+                      className={inp} style={inpStyle} required />
+                  </div>
+                </div>
 
-                  <div className="rounded-2xl overflow-hidden glass p-3 space-y-2">
-                    {PRESET_MESSAGES.filter((cat) => cat.category === activeMessageCategory).map((cat) => (
-                      <div key={cat.category} className="space-y-2">
-                        <div className="text-[10px] uppercase tracking-[0.16em] font-bold gold-text">
-                          {cat.category}
-                        </div>
-                        <div className="grid gap-2 max-h-56 overflow-y-auto pr-1">
-                          {cat.items.map((msg) => (
-                            <button
-                              key={msg}
-                              type="button"
-                              onClick={() => { setMessage(msg); setMessageBoxOpen(false); }}
-                              className="text-left text-xs px-3.5 py-2.5 rounded-xl transition-all duration-150 active:scale-[0.98] glass font-serif italic"
-                              style={{
-                                borderColor: message === msg ? 'var(--accent)' : 'var(--border)',
-                                color: message === msg ? 'var(--accent)' : 'var(--text2)',
-                              }}
-                            >
-                              "{msg}"
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text2)' }}>Alıcı Adı</label>
+                  <input type="text" placeholder="örn: Sevgilime" value={recipientName} onChange={(e) => setRecipientName(e.target.value)}
+                    className={inp} style={inpStyle} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text2)' }}>Hızlı Başlık Seçimi</label>
+                  <div className="flex flex-wrap gap-2">
+                    {PRESET_TITLES.map((p) => (
+                      <button key={p.value} type="button"
+                        onClick={() => setTitle(p.value)}
+                        className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-150 active:scale-95 border"
+                        style={{
+                          borderColor: title === p.value ? 'var(--accent)' : 'var(--border)',
+                          background: title === p.value ? 'var(--surface-solid)' : 'var(--surface2)',
+                          color: title === p.value ? 'var(--accent)' : 'var(--text2)',
+                        }}>
+                        {p.emoji} {p.label}
+                      </button>
                     ))}
                   </div>
+                </div>
+              </div>
 
-                  <div className="space-y-2 pt-2">
-                    <div className="text-[10px] uppercase tracking-[0.24em] font-bold" style={{ color: 'var(--text3)' }}>
-                      Kendi Özelleştirilmiş Mesajını Yaz
-                    </div>
-                    <textarea
-                      rows={3}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Buraya kendi özel duygu ve dileklerinizi yazabilirsiniz..."
-                      className={inp + ' resize-none'}
-                      style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
-                    />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text2)' }}>Kapak Fotoğrafı / Video</label>
+                  <div className="rounded-2xl border border-dashed p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)' }}>
+                    <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading}
+                      className="w-full text-xs cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:cursor-pointer"
+                      style={{ color: 'var(--text2)' }} />
+                    {uploading && <p className="mt-3 text-xs font-medium" style={{ color: 'var(--text2)' }}>Yükleniyor...</p>}
+                    {mediaUrl && (
+                      <div className="mt-3 flex items-center gap-3 rounded-2xl border p-2.5" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 relative">
+                          {/\.(mp4|webm|ogg|mov)(\?|$)/i.test(mediaUrl) ? (
+                            <video src={mediaUrl} className="w-full h-full object-cover" muted />
+                          ) : (
+                            <img src={mediaUrl} alt="Preview" className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold" style={{ color: 'var(--text)' }}>✓ Medya Yüklendi</p>
+                          <p className="text-[10px] truncate font-mono mt-1" style={{ color: 'var(--text2)' }}>{mediaUrl.split('/').pop()}</p>
+                        </div>
+                        <button type="button" onClick={() => { setMediaUrl(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                          className="text-xs px-2.5 py-1 rounded-xl border transition-colors flex-shrink-0" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text2)' }}>Özel Anı Mesajı</label>
+                  <div
+                    className="w-full rounded-2xl border px-4 py-3 cursor-pointer transition-all duration-200"
+                    style={{
+                      borderColor: messageBoxOpen ? 'var(--accent)' : 'var(--border)',
+                      background: 'var(--surface-solid)',
+                      color: 'var(--text2)',
+                    }}
+                    onClick={() => setMessageBoxOpen((open) => !open)}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-left italic font-serif">
+                        {message ? `"${message}"` : 'Hazır mesajlar ve özel not ekleyin...'}
+                      </span>
+                      <span className="text-xs font-bold" style={{ color: 'var(--text2)' }}>
+                        {messageBoxOpen ? '▲' : '▼'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {messageBoxOpen && (
+                    <div className="space-y-4 rounded-2xl border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)' }}>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-[0.24em] mb-2 block" style={{ color: 'var(--text3)' }}>
+                          Mesaj Kategorisi
+                        </label>
+                        <select
+                          value={activeMessageCategory}
+                          onChange={(e) => setActiveMessageCategory(e.target.value)}
+                          className="w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none border"
+                          style={{ color: 'var(--text)', background: 'var(--surface2)', borderColor: 'var(--border)' }}
+                        >
+                          {PRESET_MESSAGES.map((cat) => (
+                            <option key={cat.category} value={cat.category}>{cat.category}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="rounded-2xl overflow-hidden border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
+                        {PRESET_MESSAGES.filter((cat) => cat.category === activeMessageCategory).map((cat) => (
+                          <div key={cat.category} className="space-y-2">
+                            <div className="text-[10px] uppercase tracking-[0.16em] font-bold" style={{ color: 'var(--text3)' }}>
+                              {cat.category}
+                            </div>
+                            <div className="grid gap-2 max-h-56 overflow-y-auto pr-1">
+                              {cat.items.map((msg) => (
+                                <button
+                                  key={msg}
+                                  type="button"
+                                  onClick={() => { setMessage(msg); setMessageBoxOpen(false); }}
+                                  className="text-left text-xs px-3.5 py-2.5 rounded-xl transition-all duration-150 active:scale-[0.98] border font-serif italic"
+                                  style={{
+                                    borderColor: message === msg ? 'var(--accent)' : 'var(--border)',
+                                    background: message === msg ? 'var(--surface-solid)' : 'transparent',
+                                    color: message === msg ? 'var(--accent)' : 'var(--text2)',
+                                  }}
+                                >
+                                  "{msg}"
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="space-y-2 pt-1">
+                        <div className="text-[10px] uppercase tracking-[0.24em] font-bold" style={{ color: 'var(--text3)' }}>
+                          Kendi Mesajını Yaz
+                        </div>
+                        <textarea
+                          rows={3}
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          placeholder="Buraya özel duygu ve dileklerinizi yazabilirsiniz..."
+                          className={inp + ' resize-none'}
+                          style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <button type="submit" disabled={saving || uploading}
-              className="w-full py-3 rounded-2xl text-sm font-medium transition-all duration-200 disabled:opacity-50"
-              style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border)' }}>
+              className="w-full py-3 rounded-2xl text-sm font-medium transition-all duration-200 disabled:opacity-50 border"
+              style={{ background: 'var(--surface-solid)', color: 'var(--text)', borderColor: 'var(--border)' }}>
               {saving ? 'Kaydediliyor...' : '✨ Yeni NFC Takısını Kaydet'}
             </button>
           </form>
@@ -842,10 +889,17 @@ export default function AdminDashboard() {
                             </a>
 
                             <button
-                              onClick={() => { setActiveUrlModal(`${getOrigin()}/taki/${j.nfc_tag_id}`); setCopied(false); setNfcStatus('idle'); checkNfcSupport(); }}
+                              onClick={() => openUrlModal(j, 'share')}
                               className="py-2 px-3 rounded-xl text-xs font-bold glass hover:border-amber-400 transition-all"
                               title="NFC & QR Kod">
                               📡 NFC/QR
+                            </button>
+
+                            <button
+                              onClick={() => openUrlModal(j, 'edit')}
+                              className="py-2 px-3 rounded-xl text-xs font-bold glass hover:border-rose-400 transition-all"
+                              title="Müşteri Düzenleme Linki">
+                              ✏️ Düzenle
                             </button>
 
                             <button
@@ -913,9 +967,13 @@ export default function AdminDashboard() {
                         className="px-3 py-1.5 rounded-xl text-xs font-bold glass text-center hover:border-rose-400">
                         ↗ Portal
                       </a>
-                      <button onClick={() => { setActiveUrlModal(`${getOrigin()}/taki/${j.nfc_tag_id}`); setCopied(false); setNfcStatus('idle'); checkNfcSupport(); }}
+                      <button onClick={() => openUrlModal(j, 'share')}
                         className="px-3 py-1.5 rounded-xl text-xs font-bold glass hover:border-amber-400">
                         📡 NFC
+                      </button>
+                      <button onClick={() => openUrlModal(j, 'edit')}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold glass hover:border-rose-400">
+                        ✏️ Edit
                       </button>
                       <button onClick={() => downloadQRCode(j.nfc_tag_id)}
                         className="px-3 py-1.5 rounded-xl text-xs font-bold glass hover:border-emerald-400">
@@ -1049,9 +1107,9 @@ export default function AdminDashboard() {
             {/* Başlık */}
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>📡 NFC Etikete Yaz</h3>
+                <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>{activeUrlModalMode === 'edit' ? '✏️ Müşteri Düzenleme Linki' : '📡 NFC Etikete Yaz'}</h3>
                 <p className="text-sm mt-1" style={{ color: 'var(--text2)' }}>
-                  Yazılacak URL:
+                  {activeUrlModalMode === 'edit' ? 'Bu linki müşteriyle paylaşarak portalı kendisinin düzenlemesini sağlayabilirsiniz.' : 'Yazılacak URL:'}
                 </p>
               </div>
               <button onClick={() => { cancelNfcWrite(); setActiveUrlModal(null); }}
@@ -1067,8 +1125,23 @@ export default function AdminDashboard() {
               className="w-full px-4 py-3 rounded-xl font-mono text-sm outline-none"
               style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }} />
 
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (!activeUrlModalNfcTagId) return;
+                  const nextMode = activeUrlModalMode === 'share' ? 'edit' : 'share';
+                  const nextLink = `${getOrigin()}/taki/${activeUrlModalNfcTagId}${nextMode === 'edit' ? '?edit=true' : ''}`;
+                  setActiveUrlModal(nextLink);
+                  setActiveUrlModalMode(nextMode);
+                  setCopied(false);
+                }}
+                className="rounded-xl px-3 py-2 text-xs font-bold" style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border)' }}>
+                {activeUrlModalMode === 'share' ? '✏️ Düzenleme Linki' : '🌐 Paylaşım Linki'}
+              </button>
+            </div>
+
             {/* Web NFC butonu (Android Chrome) */}
-            {nfcSupported !== false && (
+            {nfcSupported !== false && activeUrlModalMode === 'share' && (
               <div className="rounded-2xl p-5 space-y-4" style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📱</span>
@@ -1111,7 +1184,7 @@ export default function AdminDashboard() {
             )}
 
             {/* iOS / desteklenmiyor uyarısı */}
-            {nfcSupported === false && (
+            {nfcSupported === false && activeUrlModalMode === 'share' && (
               <div className="rounded-xl p-4 text-sm" style={{ background: '#fef3c7', border: '1px solid #fde68a', color: '#92400e' }}>
                 <p className="font-bold mb-1">⚠️ Tarayıcınız Web NFC desteklemiyor</p>
                 <p className="text-xs">Web NFC sadece <strong>Android + Chrome</strong>'da çalışır. iPhone kullanıyorsanız aşağıdaki manuel yöntemi kullanın.</p>
@@ -1123,7 +1196,7 @@ export default function AdminDashboard() {
               <button onClick={() => handleCopyText(activeUrlModal)}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-98"
                 style={{ background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border)' }}>
-                {copied ? '✓ Kopyalandı' : '📋 URL Kopyala'}
+                {copied ? '✓ Kopyalandı' : activeUrlModalMode === 'edit' ? '📋 Düzenleme Linki Kopyala' : '📋 URL Kopyala'}
               </button>
               <button onClick={() => { cancelNfcWrite(); setActiveUrlModal(null); }}
                 className="px-5 py-2.5 rounded-xl text-sm font-bold"

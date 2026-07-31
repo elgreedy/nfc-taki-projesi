@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import NextImage from 'next/image';
+import { supabase } from '@/lib/supabase';
 
 interface Jewelry {
   id: string;
@@ -31,6 +33,8 @@ function isVideo(url: string) {
 }
 
 export default function TakiDetailClient({ taki }: Props) {
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get('edit') === 'true';
   const [isClient, setIsClient] = useState(false);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
@@ -45,6 +49,15 @@ export default function TakiDetailClient({ taki }: Props) {
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [storyMode, setStoryMode] = useState(false);
+  const [storyIndex, setStoryIndex] = useState(0);
+  const [theme, setTheme] = useState<'rose' | 'midnight' | 'pearl' | 'emerald' | 'purple'>('rose');
+  const [fontStyle, setFontStyle] = useState<'serif' | 'sans' | 'cursive'>('serif');
+  const [showParticles, setShowParticles] = useState(true);
+  const [editForm, setEditForm] = useState({ title: taki.title, recipient_name: taki.recipient_name || '', message: taki.message || '' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editFeedback, setEditFeedback] = useState<string | null>(null);
+  const [particles, setParticles] = useState<Array<{ id: number; icon: string; left: string; delay: string; duration: string; size: string }>>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +65,29 @@ export default function TakiDetailClient({ taki }: Props) {
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => { setIsClient(true); }, []);
+
+  useEffect(() => {
+    setEditForm({ title: taki.title, recipient_name: taki.recipient_name || '', message: taki.message || '' });
+  }, [taki.title, taki.recipient_name, taki.message]);
+
+  useEffect(() => {
+    if (!storyMode || mediaItems.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setStoryIndex((prev) => (prev + 1) % mediaItems.length);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [storyMode, mediaItems.length]);
+
+  useEffect(() => {
+    setParticles(Array.from({ length: 18 }, (_, index) => ({
+      id: index,
+      icon: ['💖', '✨', '💫', '🌸'][index % 4],
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 4}s`,
+      duration: `${8 + Math.random() * 6}s`,
+      size: `${12 + Math.random() * 18}px`,
+    })));
+  }, []);
 
   useEffect(() => {
     if (!taki.id) return;
@@ -224,6 +260,24 @@ export default function TakiDetailClient({ taki }: Props) {
     handleUploadFiles(files);
   };
 
+  const handleSaveEdit = async () => {
+    setEditSaving(true);
+    setEditFeedback(null);
+    try {
+      const { error } = await supabase.from('jewelries').update({
+        title: editForm.title,
+        recipient_name: editForm.recipient_name,
+        message: editForm.message,
+      }).eq('id', taki.id);
+      if (error) throw new Error(error.message);
+      setEditFeedback('Anınız başarıyla güncellendi.');
+    } catch (err: any) {
+      setEditFeedback(err.message || 'Güncelleme başarısız.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
@@ -264,10 +318,24 @@ export default function TakiDetailClient({ taki }: Props) {
 
   if (hasMedia && currentMedia) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative selection:bg-rose-500 selection:text-white" style={{ background: 'var(--bg)' }}>
+      <main className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative selection:bg-rose-500 selection:text-white ${theme === 'rose' ? 'theme-rose' : theme === 'midnight' ? 'theme-midnight' : theme === 'pearl' ? 'theme-pearl' : theme === 'emerald' ? 'theme-emerald' : 'theme-purple'}`} style={{ background: 'var(--bg)' }}>
         {/* Background Blobs */}
         <div className="blob animate-glow-pulse" style={{ width: 400, height: 400, background: 'var(--accent-gold)', top: '5%', right: '-8%', opacity: 0.1 }} />
         <div className="blob animate-float-slow" style={{ width: 350, height: 350, background: 'var(--accent-rose)', bottom: '5%', left: '-8%', opacity: 0.12 }} />
+
+        {showParticles && (
+          <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+            {particles.map((particle) => (
+              <span
+                key={particle.id}
+                className="particle"
+                style={{ left: particle.left, top: '-10vh', fontSize: particle.size, animationDelay: particle.delay, animationDuration: particle.duration }}
+              >
+                {particle.icon}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="relative z-10 w-full max-w-sm lg:max-w-5xl animate-fade-up">
 
@@ -281,8 +349,25 @@ export default function TakiDetailClient({ taki }: Props) {
             </div>
           )}
 
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-full border px-4 py-3 glass-3d gold-foil-glow" style={{ borderColor: 'var(--border)' }}>
+            <div className="text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--accent)' }}>Anı Portalı</div>
+            <div className="flex flex-wrap gap-2">
+              {(['rose','midnight','pearl','emerald','purple'] as const).map((item) => (
+                <button key={item} onClick={() => setTheme(item)} className="rounded-full border px-3 py-1.5 text-[11px] font-semibold" style={{ borderColor: theme === item ? 'var(--accent)' : 'var(--border)', background: theme === item ? 'var(--surface2)' : 'transparent', color: 'var(--text)' }}>
+                  {item === 'rose' ? '🌹' : item === 'midnight' ? '🌌' : item === 'pearl' ? '🍃' : item === 'emerald' ? '🌿' : '🔮'}
+                </button>
+              ))}
+              <button onClick={() => setStoryMode((prev) => !prev)} className="rounded-full border px-3 py-1.5 text-[11px] font-semibold" style={{ borderColor: 'var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>
+                {storyMode ? '📸 Hikaye Açık' : '📖 Hikaye Modu'}
+              </button>
+              <button onClick={() => setShowParticles((prev) => !prev)} className="rounded-full border px-3 py-1.5 text-[11px] font-semibold" style={{ borderColor: 'var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>
+                {showParticles ? '✨ Efektler Açık' : '🌙 Efektler Kapalı'}
+              </button>
+            </div>
+          </div>
+
           {/* Main Memory Card */}
-          <div className="glass-card flex flex-col lg:flex-row lg:min-h-[560px] overflow-hidden">
+          <div className="glass-card glass-3d holographic-border flex flex-col lg:flex-row lg:min-h-[560px] overflow-hidden">
 
             {/* LEFT: Carousel Container */}
             <div className="relative flex flex-col lg:w-[62%] lg:flex-shrink-0"
@@ -330,6 +415,24 @@ export default function TakiDetailClient({ taki }: Props) {
                   </div>
                 );
               })()}
+
+              {storyMode && mediaItems.length > 1 && (
+                <div className="absolute inset-0 z-20 flex flex-col justify-between p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="rounded-full bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white">Story Mode</div>
+                    <div className="flex gap-1">
+                      {mediaItems.map((_, idx) => (
+                        <div key={idx} className="h-1.5 w-12 rounded-full overflow-hidden bg-white/25">
+                          <div className="h-full rounded-full bg-white" style={{ width: idx === storyIndex ? '100%' : '0%', transition: 'width 0.4s ease' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <button onClick={() => setStoryMode(false)} className="rounded-full bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white">Kapat</button>
+                  </div>
+                </div>
+              )}
 
               {/* Navigation Arrows */}
               {multiPhoto && (
@@ -401,7 +504,7 @@ export default function TakiDetailClient({ taki }: Props) {
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight font-serif shimmer-text">
+                  <h1 className={`text-3xl lg:text-4xl font-extrabold tracking-tight ${fontStyle === 'cursive' ? 'font-serif' : fontStyle === 'sans' ? 'font-sans' : 'font-serif'} shimmer-text`}>
                     {taki.title}
                   </h1>
                   {taki.recipient_name && (
@@ -411,6 +514,26 @@ export default function TakiDetailClient({ taki }: Props) {
                   )}
                 </div>
 
+                {isEditMode && (
+                  <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: 'var(--border)', background: 'var(--surface2)' }}>
+                    <div className="text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--accent)' }}>Kişisel Düzenleme</div>
+                    <div className="space-y-2">
+                      <input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text)' }} placeholder="Başlık" />
+                      <input value={editForm.recipient_name} onChange={(e) => setEditForm({ ...editForm, recipient_name: e.target.value })} className="w-full rounded-xl border px-3 py-2 text-sm" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text)' }} placeholder="Alıcı adı" />
+                      <textarea value={editForm.message} onChange={(e) => setEditForm({ ...editForm, message: e.target.value })} rows={3} className="w-full rounded-xl border px-3 py-2 text-sm resize-none" style={{ borderColor: 'var(--border)', background: 'var(--surface-solid)', color: 'var(--text)' }} placeholder="Mesajınız" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={handleSaveEdit} disabled={editSaving} className="rounded-xl px-3 py-2 text-sm font-semibold text-white" style={{ background: 'var(--accent-gradient)' }}>
+                        {editSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                      </button>
+                      <button onClick={() => setFontStyle(fontStyle === 'serif' ? 'cursive' : fontStyle === 'cursive' ? 'sans' : 'serif')} className="rounded-xl border px-3 py-2 text-sm font-semibold" style={{ borderColor: 'var(--border)', color: 'var(--text)' }}>
+                        {fontStyle === 'serif' ? 'Yazı Tipi: Serif' : fontStyle === 'cursive' ? 'Yazı Tipi: El Yazısı' : 'Yazı Tipi: Sans'}
+                      </button>
+                    </div>
+                    {editFeedback && <p className="text-xs" style={{ color: 'var(--accent)' }}>{editFeedback}</p>}
+                  </div>
+                )}
+
                 {/* Personal Message Card */}
                 {taki.message && (
                   <div className="relative rounded-2xl p-5 border transition-all" style={{ background: 'var(--surface2)', borderColor: 'var(--border)' }}>
@@ -418,7 +541,7 @@ export default function TakiDetailClient({ taki }: Props) {
                       style={{ color: 'var(--accent)', borderColor: 'var(--border)' }}>
                       💌 Özel Mesaj
                     </div>
-                    <p className="text-sm sm:text-base leading-relaxed italic font-serif pt-1" style={{ color: 'var(--text2)' }}>
+                    <p className={`text-sm sm:text-base leading-relaxed pt-1 ${fontStyle === 'cursive' ? 'font-serif italic' : fontStyle === 'sans' ? 'font-sans' : 'font-serif'}`} style={{ color: 'var(--text2)' }}>
                       "{taki.message}"
                     </p>
                   </div>
