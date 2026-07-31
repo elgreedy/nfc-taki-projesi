@@ -210,6 +210,7 @@ export default function AdminDashboard() {
   const [copied, setCopied] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [activeMessageCategory, setActiveMessageCategory] = useState<string>(PRESET_MESSAGES[0]?.category || '');
+  const [messageBoxOpen, setMessageBoxOpen] = useState(false);
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [activeMediaModal, setActiveMediaModal] = useState<Jewelry | null>(null);
   const [modalMedia, setModalMedia] = useState<MediaItem[]>([]);
@@ -499,52 +500,71 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text2)' }}>Özel Mesaj</label>
-              <textarea rows={3} placeholder="NFC okutulduğunda görünecek mesaj..." value={message} onChange={(e) => setMessage(e.target.value)}
-                className={inp + " resize-none"} style={inpStyle} />
-              <div className="space-y-2 pt-1">
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-[0.24em] mb-2 block" style={{ color: 'var(--text2)' }}>
-                    Mesaj Kategorisi
-                  </label>
-                  <select
-                    value={activeMessageCategory}
-                    onChange={(e) => setActiveMessageCategory(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none"
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
-                  >
-                    {PRESET_MESSAGES.map((cat) => (
-                      <option key={cat.category} value={cat.category}>{cat.category}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
-                  {PRESET_MESSAGES.filter((cat) => cat.category === activeMessageCategory).map((cat) => (
-                    <div key={cat.category} className="space-y-2 p-3" style={{ background: 'var(--surface2)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.16em] font-bold" style={{ color: 'var(--text2)' }}>
-                        {cat.category}
-                      </div>
-                      <div className="grid gap-2">
-                        {cat.items.map((msg) => (
-                          <button
-                            key={msg}
-                            type="button"
-                            onClick={() => setMessage(msg)}
-                            className="text-left text-xs px-3 py-2 rounded-2xl transition-all duration-150 active:scale-[0.98]"
-                            style={{
-                              background: message === msg ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--surface)',
-                              border: `1px solid ${message === msg ? 'var(--accent)' : 'var(--border)'}`,
-                              color: message === msg ? 'var(--accent)' : 'var(--text2)',
-                            }}
-                          >
-                            "{msg}"
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+              <div
+                className="w-full rounded-2xl px-4 py-3 cursor-pointer transition-all duration-200"
+                style={{
+                  background: 'var(--surface2)',
+                  border: `1px solid ${messageBoxOpen ? 'var(--accent)' : 'var(--border)'}`,
+                  color: 'var(--text2)',
+                }}
+                onClick={() => setMessageBoxOpen((open) => !open)}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-left">
+                    {message ? message : 'Bir kategori seçin ve içinden bir mesaj seçin...'}
+                  </span>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text2)' }}>
+                    {messageBoxOpen ? '˅' : '›'}
+                  </span>
                 </div>
               </div>
+
+              {messageBoxOpen && (
+                <div className="space-y-3 pt-3">
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.24em] mb-2 block" style={{ color: 'var(--text2)' }}>
+                      Mesaj Kategorisi
+                    </label>
+                    <select
+                      value={activeMessageCategory}
+                      onChange={(e) => setActiveMessageCategory(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl text-sm font-medium outline-none"
+                      style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                    >
+                      {PRESET_MESSAGES.map((cat) => (
+                        <option key={cat.category} value={cat.category}>{cat.category}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+                    {PRESET_MESSAGES.filter((cat) => cat.category === activeMessageCategory).map((cat) => (
+                      <div key={cat.category} className="space-y-2 p-3" style={{ background: 'var(--surface2)' }}>
+                        <div className="text-[10px] uppercase tracking-[0.16em] font-bold" style={{ color: 'var(--text2)' }}>
+                          {cat.category}
+                        </div>
+                        <div className="grid gap-2">
+                          {cat.items.map((msg) => (
+                            <button
+                              key={msg}
+                              type="button"
+                              onClick={() => { setMessage(msg); setMessageBoxOpen(false); }}
+                              className="text-left text-xs px-3 py-2 rounded-2xl transition-all duration-150 active:scale-[0.98]"
+                              style={{
+                                background: message === msg ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--surface)',
+                                border: `1px solid ${message === msg ? 'var(--accent)' : 'var(--border)'}`,
+                                color: message === msg ? 'var(--accent)' : 'var(--text2)',
+                              }}
+                            >
+                              "{msg}"
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <button type="submit" disabled={saving || uploading}
               className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-50 active:scale-98"
