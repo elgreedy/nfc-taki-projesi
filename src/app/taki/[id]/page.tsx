@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import TakiDetailClient from './TakiDetailClient';
@@ -26,6 +27,38 @@ async function getTaki(id: string) {
   }
 
   return data as Jewelry;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const taki = await getTaki(String(id));
+
+  if (!taki) {
+    return {};
+  }
+
+  const title = `${taki.title} — NFC Takı Anı Portalı`;
+  const description = taki.message
+    ? `${taki.message.slice(0, 155)}${taki.message.length > 155 ? '…' : ''}`
+    : `${taki.title} için hazırlanan özel dijital anı portalı.`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/taki/${taki.nfc_tag_id}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
 }
 
 export default async function TakiPage({ params }: { params: Promise<{ id: string }> }) {

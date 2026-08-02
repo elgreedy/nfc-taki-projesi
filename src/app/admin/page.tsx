@@ -226,6 +226,7 @@ export default function AdminDashboard() {
   const [modalMedia, setModalMedia] = useState<MediaItem[]>([]);
   const [modalMediaLoading, setModalMediaLoading] = useState(false);
   const [modalUploading, setModalUploading] = useState(false);
+  const [previewMedia, setPreviewMedia] = useState<MediaItem | null>(null);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
   const [nfcWriting, setNfcWriting] = useState(false);
   const [nfcStatus, setNfcStatus] = useState<'idle' | 'waiting' | 'success' | 'error'>('idle');
@@ -369,14 +370,20 @@ export default function AdminDashboard() {
     if (!confirm('Bu fotoğrafı/videoyu silmek istediğinize emin misiniz?')) return;
     const res = await fetch('/api/delete-media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, media_url }) });
     if (!res.ok) { const { error } = await res.json(); notify('Hata: ' + error, 'error'); }
-    else notify('Medya silindi.');
+    else {
+      setJewelries((prev) => prev.map((j) => (j.id === id ? { ...j, media_url: '' } : j)));
+      notify('Medya silindi.');
+    }
   };
 
   const handleDelete = async (id: string, media_url: string) => {
     if (!confirm('Bu NFC takıyı tamamen silmek istediğinize emin misiniz?')) return;
     const res = await fetch('/api/delete-jewelry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, media_url }) });
     if (!res.ok) { const { error } = await res.json(); notify('Hata: ' + error, 'error'); }
-    else notify('Takı silindi.');
+    else {
+      setJewelries((prev) => prev.filter((j) => j.id !== id));
+      notify('Takı silindi.');
+    }
   };
 
   const scrollToCreateForm = () => {
@@ -385,6 +392,7 @@ export default function AdminDashboard() {
 
   const openMediaModal = (j: Jewelry) => {
     setActiveMediaModal(j);
+    setPreviewMedia(null);
     setModalMedia([]);
     setModalMediaLoading(true);
     fetch(`/api/get-media?jewelry_id=${j.id}`)
@@ -414,6 +422,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error('Eklenemedi');
       const newItem = await res.json();
       setModalMedia((prev) => [...prev, newItem]);
+      setJewelries((prev) => prev.map((j) => (j.id === activeMediaModal.id ? { ...j, media_url: j.media_url || newItem.url } : j)));
       notify('Medya eklendi!');
     } catch (err: any) {
       notify('Hata: ' + err.message, 'error');
@@ -433,8 +442,27 @@ export default function AdminDashboard() {
         body: JSON.stringify({ id: item.id, url: item.url, jewelry_id: activeMediaModal.id }),
       });
       if (!res.ok) throw new Error('Silme başarısız');
-      setModalMedia((prev) => prev.filter((m) => m.id !== item.id));
+      const remainingMedia = modalMedia.filter((m) => m.id !== item.id);
+      setModalMedia(remainingMedia);
+      setJewelries((prev) => prev.map((j) => (j.id === activeMediaModal.id ? { ...j, media_url: remainingMedia[0]?.url || '' } : j)));
+      setPreviewMedia((prev) => (prev?.id === item.id ? null : prev));
       notify('Medya silindi.');
+    } catch (err: any) {
+      notify('Hata: ' + err.message, 'error');
+    }
+  };
+
+  const handleSetCoverMedia = async (item: MediaItem) => {
+    if (!activeMediaModal) return;
+    try {
+      const res = await fetch('/api/update-media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: activeMediaModal.id, media_url: item.url }),
+      });
+      if (!res.ok) throw new Error('Kapak güncellenemedi');
+      setJewelries((prev) => prev.map((j) => (j.id === activeMediaModal.id ? { ...j, media_url: item.url } : j)));
+      notify('Kapak medya güncellendi.');
     } catch (err: any) {
       notify('Hata: ' + err.message, 'error');
     }
@@ -472,6 +500,17 @@ export default function AdminDashboard() {
               </div>
 
               <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch('/api/admin/logout', { method: 'POST' });
+                    window.location.href = '/admin/login';
+                  }}
+                  className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}
+                >
+                  Çıkış
+                </button>
                 <button
                   type="button"
                   onClick={scrollToCreateForm}
@@ -1042,17 +1081,37 @@ export default function AdminDashboard() {
                     )}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{ background: 'rgba(0,0,0,0.5)' }}>
-                      <button
-                        onClick={() => handleDeleteMediaItem(item)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                        style={{ background: '#ef4444' }}>
-                        ✕
-                      </button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <button
+                          onClick={() => setPreviewMedia(item)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ background: 'rgba(255,255,255,0.2)' }}>
+                          👁
+                        </button>
+                        <button
+                          onClick={() => handleSetCoverMedia(item)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ background: 'rgba(245,158,11,0.9)' }}>
+                          ⭐
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMediaItem(item)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                          style={{ background: '#ef4444' }}>
+                          ✕
+                        </button>
+                      </div>
                     </div>
                     {item.media_type === 'video' && (
                       <div className="absolute top-1 left-1 text-xs px-1.5 py-0.5 rounded-full font-bold"
                         style={{ background: 'rgba(0,0,0,0.6)', color: 'white' }}>
                         ▶
+                      </div>
+                    )}
+                    {activeMediaModal.media_url === item.url && (
+                      <div className="absolute bottom-1 left-1 text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
+                        style={{ background: 'rgba(16,185,129,0.9)', color: 'white' }}>
+                        Kapak
                       </div>
                     )}
                   </div>
@@ -1091,6 +1150,29 @@ export default function AdminDashboard() {
                 Kapat
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {previewMedia && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+          onClick={() => setPreviewMedia(null)}>
+          <div className="w-full max-w-3xl rounded-2xl p-4 shadow-2xl"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Önizleme</h3>
+                <p className="text-sm" style={{ color: 'var(--text2)' }}>{previewMedia.media_type === 'video' ? 'Video önizleme' : 'Fotoğraf önizleme'}</p>
+              </div>
+              <button onClick={() => setPreviewMedia(null)} className="w-8 h-8 rounded-xl" style={{ background: 'var(--surface2)', color: 'var(--text2)' }}>✕</button>
+            </div>
+            {previewMedia.media_type === 'video' ? (
+              <video src={previewMedia.url} controls autoPlay className="w-full max-h-[70vh] rounded-xl object-contain bg-black" />
+            ) : (
+              <img src={previewMedia.url} alt="Preview" className="w-full max-h-[70vh] rounded-xl object-contain" />
+            )}
           </div>
         </div>
       )}

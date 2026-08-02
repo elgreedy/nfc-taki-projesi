@@ -15,9 +15,22 @@ const playfair = Playfair_Display({
   weight: ["600", "700", "800"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "NFC Takı — Anı Portalı",
   description: "NFC etiketli takılar için dijital anı portalı. Fotoğraf, video ve özel mesajlar tek dokunuşla.",
+  openGraph: {
+    title: "NFC Takı — Anı Portalı",
+    description: "NFC etiketli takılar için dijital anı portalı. Fotoğraf, video ve özel mesajlar tek dokunuşla.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NFC Takı — Anı Portalı",
+    description: "NFC etiketli takılar için dijital anı portalı. Fotoğraf, video ve özel mesajlar tek dokunuşla.",
+  },
 };
 
 export default function RootLayout({
