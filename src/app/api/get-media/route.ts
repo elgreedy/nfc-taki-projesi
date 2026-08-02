@@ -18,5 +18,10 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  
+  // Add caching headers - cache for 1 hour in CDN and 5 minutes in browser
+  const response = NextResponse.json(data);
+  response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  response.headers.set('CDN-Cache-Control', 'max-age=3600');
+  return response;
 }
