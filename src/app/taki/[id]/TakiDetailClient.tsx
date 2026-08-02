@@ -52,7 +52,13 @@ export default function TakiDetailClient({ taki }: Props) {
   const [storyMode, setStoryMode] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
   const [fontStyle, setFontStyle] = useState<'serif' | 'sans' | 'cursive'>('serif');
-  const [showParticles, setShowParticles] = useState(true);
+  const [showParticles, setShowParticles] = useState(() => {
+    // Disable particles on mobile for better performance
+    if (typeof window !== 'undefined') {
+      return window.innerWidth > 768;
+    }
+    return true;
+  });
   const [editForm, setEditForm] = useState({ title: taki.title, recipient_name: taki.recipient_name || '', message: taki.message || '' });
   const [editSaving, setEditSaving] = useState(false);
   const [editFeedback, setEditFeedback] = useState<string | null>(null);
@@ -419,14 +425,23 @@ export default function TakiDetailClient({ taki }: Props) {
                           {isVideo(item.url) ? (
                             <video
                               src={item.url}
-                              controls playsInline
+                              controls
+                              playsInline
+                              preload="metadata"
                               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                             />
                           ) : (
                             <img
                               src={item.url}
-                              alt=""
+                              alt="Media"
+                              loading="eager"
+                              decoding="sync"
                               onClick={() => setLightboxIndex(currentIndex)}
+                              onError={(e) => {
+                                // Fallback for failed images
+                                (e.target as HTMLImageElement).src = '';
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
                               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'zoom-in' }}
                             />
                           )}

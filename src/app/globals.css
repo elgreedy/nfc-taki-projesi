@@ -260,3 +260,50 @@ body {
   z-index: 0;
 }
 
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Disable heavy animations on mobile */
+  .animate-float,
+  .animate-float-slow,
+  .animate-glow-pulse {
+    animation: none !important;
+  }
+
+  .blob {
+    filter: blur(40px) !important;
+    opacity: 0.05 !important;
+  }
+
+  /* Reduce motion for performance */
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Re-enable necessary animations */
+  .animate-fade-up,
+  .animate-fade-in {
+    animation-duration: 0.3s !important;
+  }
+
+  /* Optimize image loading */
+  img, video {
+    will-change: auto;
+  }
+
+  /* Reduce shadows on mobile */
+  .glass, .glass-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+/* Prefers reduced motion - respect user settings */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

@@ -21,6 +21,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "NFC Takı — Anı Portalı",
   description: "NFC etiketli takılar için dijital anı portalı. Fotoğraf, video ve özel mesajlar tek dokunuşla.",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "NFC Takı — Anı Portalı",
     description: "NFC etiketli takılar için dijital anı portalı. Fotoğraf, video ve özel mesajlar tek dokunuşla.",

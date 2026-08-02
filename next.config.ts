@@ -25,9 +25,6 @@ const nextConfig: NextConfig = {
     // Cache optimization
     minimumCacheTTL: 31536000,
   },
-
-  // Swc minification (faster than terser)
-  swcMinify: true,
   
   // Optimize production builds
   productionBrowserSourceMaps: false,
