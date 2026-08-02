@@ -435,13 +435,7 @@ export default function TakiDetailClient({ taki }: Props) {
                               src={item.url}
                               alt="Media"
                               loading="eager"
-                              decoding="sync"
                               onClick={() => setLightboxIndex(currentIndex)}
-                              onError={(e) => {
-                                // Fallback for failed images
-                                (e.target as HTMLImageElement).src = '';
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
                               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'zoom-in' }}
                             />
                           )}
