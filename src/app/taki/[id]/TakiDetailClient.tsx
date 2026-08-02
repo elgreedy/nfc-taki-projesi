@@ -51,7 +51,6 @@ export default function TakiDetailClient({ taki }: Props) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [storyMode, setStoryMode] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
-  const [theme, setTheme] = useState<'rose' | 'midnight' | 'pearl' | 'emerald' | 'purple'>('rose');
   const [fontStyle, setFontStyle] = useState<'serif' | 'sans' | 'cursive'>('serif');
   const [showParticles, setShowParticles] = useState(true);
   const [editForm, setEditForm] = useState({ title: taki.title, recipient_name: taki.recipient_name || '', message: taki.message || '' });
@@ -318,7 +317,7 @@ export default function TakiDetailClient({ taki }: Props) {
 
   if (hasMedia && currentMedia) {
     return (
-      <main className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative selection:bg-rose-500 selection:text-white ${theme === 'rose' ? 'theme-rose' : theme === 'midnight' ? 'theme-midnight' : theme === 'pearl' ? 'theme-pearl' : theme === 'emerald' ? 'theme-emerald' : 'theme-purple'}`} style={{ background: 'var(--bg)' }}>
+      <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative selection:bg-rose-500 selection:text-white theme-rose" style={{ background: 'var(--bg)' }}>
         {/* Background Blobs */}
         <div className="blob animate-glow-pulse" style={{ width: 400, height: 400, background: 'var(--accent-gold)', top: '5%', right: '-8%', opacity: 0.1 }} />
         <div className="blob animate-float-slow" style={{ width: 350, height: 350, background: 'var(--accent-rose)', bottom: '5%', left: '-8%', opacity: 0.12 }} />
@@ -352,11 +351,6 @@ export default function TakiDetailClient({ taki }: Props) {
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-full border px-4 py-3 glass-3d gold-foil-glow" style={{ borderColor: 'var(--border)' }}>
             <div className="text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: 'var(--accent)' }}>Anı Portalı</div>
             <div className="flex flex-wrap gap-2">
-              {(['rose','midnight','pearl','emerald','purple'] as const).map((item) => (
-                <button key={item} onClick={() => setTheme(item)} className="rounded-full border px-3 py-1.5 text-[11px] font-semibold" style={{ borderColor: theme === item ? 'var(--accent)' : 'var(--border)', background: theme === item ? 'var(--surface2)' : 'transparent', color: 'var(--text)' }}>
-                  {item === 'rose' ? '🌹' : item === 'midnight' ? '🌌' : item === 'pearl' ? '🍃' : item === 'emerald' ? '🌿' : '🔮'}
-                </button>
-              ))}
               <button onClick={() => setStoryMode((prev) => !prev)} className="rounded-full border px-3 py-1.5 text-[11px] font-semibold" style={{ borderColor: 'var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}>
                 {storyMode ? '📸 Hikaye Açık' : '📖 Hikaye Modu'}
               </button>
