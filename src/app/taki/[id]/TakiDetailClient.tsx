@@ -68,6 +68,7 @@ export default function TakiDetailClient({ taki }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const thumbsRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => { setIsClient(true); }, []);
 
@@ -217,13 +218,28 @@ export default function TakiDetailClient({ taki }: Props) {
     }
   }, [isTransitioning, trackIndex]);
 
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!multiPhoto) return; // Disable swipe if only one photo
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
+    if (!multiPhoto || touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (dx < -40) next();
-    else if (dx > 40) prev();
+    const dy = e.changedTouches[0].clientY - (touchStartY.current || 0);
+    
+    // Prioritize vertical scroll - if vertical movement is larger, ignore horizontal swipe
+    if (Math.abs(dy) > Math.abs(dx)) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
+    
+    // Only trigger swipe if horizontal movement is significant (60px+)
+    if (dx < -60) next();
+    else if (dx > 60) prev();
     touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   const toggleAudio = () => {
