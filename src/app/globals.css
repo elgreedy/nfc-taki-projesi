@@ -225,50 +225,6 @@ body {
   box-shadow: 0 0 25px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(212, 175, 55, 0.15);
 }
 
-/* Theme Presets */
-.theme-rose {
-  --bg: #fbf7f4;
-  --surface: rgba(255, 255, 255, 0.88);
-  --border: rgba(212, 175, 55, 0.25);
-  --accent: #d4af37;
-  --text: #1c1512;
-}
-
-.theme-midnight {
-  --bg: #07050a;
-  --surface: rgba(20, 15, 28, 0.82);
-  --border: rgba(240, 98, 146, 0.3);
-  --accent: #f06292;
-  --text: #f7f0eb;
-  --accent-gradient: linear-gradient(135deg, #f06292 0%, #ba68c8 50%, #f3ce70 100%);
-}
-
-.theme-pearl {
-  --bg: #f8f6f0;
-  --surface: rgba(255, 253, 248, 0.92);
-  --border: rgba(200, 180, 140, 0.3);
-  --accent: #b89759;
-  --text: #2a2521;
-}
-
-.theme-emerald {
-  --bg: #04120d;
-  --surface: rgba(10, 30, 22, 0.85);
-  --border: rgba(52, 211, 153, 0.3);
-  --accent: #34d399;
-  --text: #ecfdf5;
-  --accent-gradient: linear-gradient(135deg, #34d399 0%, #fbbf24 100%);
-}
-
-.theme-purple {
-  --bg: #0a0412;
-  --surface: rgba(25, 12, 38, 0.85);
-  --border: rgba(192, 132, 252, 0.3);
-  --accent: #c084fc;
-  --text: #f5f3ff;
-  --accent-gradient: linear-gradient(135deg, #c084fc 0%, #f472b6 100%);
-}
-
 /* Floating particles keyframes */
 @keyframes particle-float {
   0% { transform: translateY(105vh) rotate(0deg) scale(0.8); opacity: 0; }

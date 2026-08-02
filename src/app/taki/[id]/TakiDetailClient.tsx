@@ -344,7 +344,7 @@ export default function TakiDetailClient({ taki }: Props) {
 
   if (hasMedia && currentMedia) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative selection:bg-rose-500 selection:text-white theme-rose" style={{ background: 'var(--bg)' }}>
+      <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative selection:bg-rose-500 selection:text-white" style={{ background: 'var(--bg)' }}>
         {/* Background Blobs */}
         <div className="blob animate-glow-pulse" style={{ width: 400, height: 400, background: 'var(--accent-gold)', top: '5%', right: '-8%', opacity: 0.1 }} />
         <div className="blob animate-float-slow" style={{ width: 350, height: 350, background: 'var(--accent-rose)', bottom: '5%', left: '-8%', opacity: 0.12 }} />
