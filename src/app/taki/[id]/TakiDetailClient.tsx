@@ -431,13 +431,20 @@ export default function TakiDetailClient({ taki }: Props) {
                               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                             />
                           ) : (
-                            <img
-                              src={item.url}
-                              alt="Media"
-                              loading="eager"
+                            <div 
                               onClick={() => setLightboxIndex(currentIndex)}
-                              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'zoom-in' }}
-                            />
+                              style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-in' }}>
+                              <NextImage
+                                src={item.url}
+                                alt="Media"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 70vw"
+                                priority={i === 0}
+                                loading={i === 0 ? 'eager' : 'lazy'}
+                                style={{ objectFit: 'contain', pointerEvents: 'none' }}
+                                unoptimized={!item.url.includes('r2.dev') && !item.url.includes('unsplash.com')}
+                              />
+                            </div>
                           )}
                         </div>
                       ))}
