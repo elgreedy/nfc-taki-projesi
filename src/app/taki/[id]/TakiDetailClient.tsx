@@ -66,6 +66,20 @@ export default function TakiDetailClient({ taki }: Props) {
   useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
+    if (!isClient) return;
+    const theme = localStorage.getItem('theme');
+    const darkPreferred = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = theme === 'dark' || (theme === null && darkPreferred);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
+  }, [isClient]);
+
+  useEffect(() => {
     setEditForm({ title: taki.title, recipient_name: taki.recipient_name || '', message: taki.message || '' });
   }, [taki.title, taki.recipient_name, taki.message]);
 
